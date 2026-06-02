@@ -1357,6 +1357,51 @@
                     .attr("font-family", "Space Mono, monospace")
                     .text(METRICS[scatterYMetric].label);
 
+                const statMode =
+                    document.getElementById("scatter-stat-select")?.value || "none";
+                if (statMode !== "none") {
+                    const drawV = (x, c = "#e3b341") =>
+                        g
+                            .append("line")
+                            .attr("x1", x)
+                            .attr("x2", x)
+                            .attr("y1", 0)
+                            .attr("y2", iH)
+                            .attr("stroke", c)
+                            .attr("stroke-dasharray", "4,4");
+                    const drawH = (y, c = "#e3b341") =>
+                        g
+                            .append("line")
+                            .attr("x1", 0)
+                            .attr("x2", iW)
+                            .attr("y1", y)
+                            .attr("y2", y)
+                            .attr("stroke", c)
+                            .attr("stroke-dasharray", "4,4");
+                    const probs =
+                        statMode === "median"
+                            ? [0.5]
+                            : statMode === "quartiles"
+                                ? [0.25, 0.5, 0.75]
+                                : d3.range(0.1, 1, 0.1);
+
+                    const xValues = data
+                        .map((d) => d.xVal)
+                        .sort(d3.ascending);
+
+                    const yValues = data
+                        .map((d) => d.yVal)
+                        .sort(d3.ascending);
+
+                    probs.forEach((p) => {
+
+                        const xQ = d3.quantile(xValues, p);
+                        const yQ = d3.quantile(yValues, p);
+
+                        drawV(xScale(xQ));
+                        drawH(yScale(yQ));
+                    });
+                }
                 // Scatter dots
 
                 scatterDots = g
