@@ -339,27 +339,6 @@
 
             const tooltip = document.getElementById("tooltip");
 
-            function onStateHover(event, d) {
-                const abbr = FIPS_TO_ABBR[String(d.id).padStart(2, "0")];
-                if (!abbr) return;
-                const v = getValue(abbr, appState.currentYear, appState.currentMetric);
-                document.getElementById("tt-name").textContent =
-                    ABBR_TO_FULL[abbr] || abbr;
-                document.getElementById("tt-label").textContent =
-                    METRICS[appState.currentMetric].label;
-                document.getElementById("tt-value").textContent =
-                    v !== null ? METRICS[appState.currentMetric].format(v) : "N/A";
-                tooltip.style.opacity = 1;
-            }
-
-            function onStateMove(event) {
-                tooltip.style.left = event.clientX + 12 + "px";
-                tooltip.style.top = event.clientY - 30 + "px";
-            }
-
-            function onStateOut() {
-                tooltip.style.opacity = 0;
-            }
 
             function onStateClick(event, d) {
                 const abbr = FIPS_TO_ABBR[String(d.id).padStart(2, "0")];
