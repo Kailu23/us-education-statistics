@@ -260,7 +260,7 @@
                 const col = METRICS[appState.currentMetric].col;
                 const vals = [];
                 Object.keys(appState.eduData).forEach((abbr) => {
-                    const v = getVal(abbr, appState.currentYear, appState.currentMetric);
+                    const v = getValue(abbr, appState.currentYear, appState.currentMetric);
                     if (v !== null) vals.push(v);
                 });
                 const [minV, maxV] = d3.extent(vals);
@@ -274,7 +274,7 @@
                     .attr("fill", (d) => {
                         const abbr = FIPS_TO_ABBR[String(d.id).padStart(2, "0")];
                         if (!abbr) return "#333";
-                        const v = getVal(abbr, appState.currentYear, appState.currentMetric);
+                        const v = getValue(abbr, appState.currentYear, appState.currentMetric);
                         return v !== null ? appState.colorScale(v) : "#2a2a2a";
                     })
                     .attr("opacity", (d) => {
@@ -342,7 +342,7 @@
             function onStateHover(event, d) {
                 const abbr = FIPS_TO_ABBR[String(d.id).padStart(2, "0")];
                 if (!abbr) return;
-                const v = getVal(abbr, appState.currentYear, appState.currentMetric);
+                const v = getValue(abbr, appState.currentYear, appState.currentMetric);
                 document.getElementById("tt-name").textContent =
                     ABBR_TO_FULL[abbr] || abbr;
                 document.getElementById("tt-label").textContent =
@@ -402,7 +402,7 @@
                 const allVals = [];
                 appState.selectedStates.forEach((abbr) => {
                     years.forEach((y) => {
-                        const v = getVal(abbr, y, appState.currentMetric);
+                        const v = getValue(abbr, y, appState.currentMetric);
                         if (v !== null) allVals.push(v);
                     });
                 });
@@ -460,7 +460,7 @@
                     .curve(d3.curveMonotoneX);
 
                 appState.selectedStates.forEach((abbr, i) => {
-                    const vals = years.map((y) => getVal(abbr, y, appState.currentMetric));
+                    const vals = years.map((y) => getValue(abbr, y, appState.currentMetric));
                     const color = PALETTE[i % PALETTE.length];
 
                     g.append("path")
@@ -537,9 +537,9 @@
 
                         if (!appState.activeRegions.has(region)) return null;
 
-                        const xVal = getVal(abbr, appState.currentYear, appState.scatterXMetric);
+                        const xVal = getValue(abbr, appState.currentYear, appState.scatterXMetric);
 
-                        const yVal = getVal(abbr, appState.currentYear, appState.scatterYMetric);
+                        const yVal = getValue(abbr, appState.currentYear, appState.scatterYMetric);
 
                         if (xVal == null || yVal == null) return null;
 
