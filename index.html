@@ -1,927 +1,933 @@
 <!doctype html>
 <html lang="hr">
-  <head>
+
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>U.S. Education Statistics — Interactive Visualization</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap"
-      rel="stylesheet"
-    />
+        href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+        rel="stylesheet" />
     <style>
-      :root {
-        --bg: #0d1117;
-        --surface: #161b22;
-        --surface2: #1f2937;
-        --border: #30363d;
-        --text: #e6edf3;
-        --muted: #8b949e;
-        --accent: #58a6ff;
-        --accent2: #3fb950;
-        --accent3: #f78166;
-        --accent4: #d2a8ff;
-        --gold: #e3b341;
-      }
-
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        background: var(--bg);
-        color: var(--text);
-        font-family: "DM Sans", sans-serif;
-        min-height: 100vh;
-        overflow-x: hidden;
-      }
-
-      header {
-        padding: 20px 32px 16px;
-        border-bottom: 1px solid var(--border);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: var(--surface);
-      }
-
-      .logo {
-        font-family: "Space Mono", monospace;
-        font-size: 13px;
-        color: var(--accent);
-        letter-spacing: 0.05em;
-        opacity: 0.8;
-      }
-
-      h1 {
-        font-size: 18px;
-        font-weight: 600;
-        letter-spacing: -0.02em;
-      }
-
-      .subtitle {
-        font-size: 12px;
-        color: var(--muted);
-        margin-top: 2px;
-        font-family: "Space Mono", monospace;
-      }
-
-      .layout {
-        display: grid;
-        grid-template-columns: 260px 1fr 300px;
-        grid-template-rows: 1.7fr 0.8fr;
-        height: calc(100vh - 65px);
-      }
-
-      .left-panel {
-        grid-row: 1 / 3;
-        background: var(--surface);
-        border-right: 1px solid var(--border);
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        overflow-y: auto;
-      }
-
-      .control-group label {
-        display: block;
-        font-size: 11px;
-        font-family: "Space Mono", monospace;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        margin-bottom: 8px;
-      }
-
-      select {
-        width: 100%;
-        background: var(--surface2);
-        border: 1px solid var(--border);
-        color: var(--text);
-        padding: 8px 12px;
-        border-radius: 6px;
-        font-family: "DM Sans", sans-serif;
-        font-size: 14px;
-        appearance: none;
-        cursor: pointer;
-        transition: border-color 0.2s;
-      }
-
-      select:hover,
-      select:focus {
-        border-color: var(--accent);
-        outline: none;
-      }
-
-      .year-display {
-        font-family: "Space Mono", monospace;
-        font-size: 36px;
-        font-weight: 700;
-        color: var(--accent);
-        text-align: center;
-        letter-spacing: -0.02em;
-        margin-bottom: 8px;
-      }
-
-      input[type="range"] {
-        width: 100%;
-        appearance: none;
-        height: 4px;
-        border-radius: 2px;
-        background: var(--border);
-        cursor: pointer;
-        outline: none;
-      }
-
-      input[type="range"]::-webkit-slider-thumb {
-        appearance: none;
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        background: var(--accent);
-        border: 2px solid var(--bg);
-        box-shadow: 0 0 6px rgba(88, 166, 255, 0.5);
-      }
-
-      .play-btn {
-        width: 100%;
-        padding: 10px;
-        background: var(--accent);
-        color: var(--bg);
-        border: none;
-        border-radius: 6px;
-        font-family: "Space Mono", monospace;
-        font-size: 12px;
-        font-weight: 700;
-        cursor: pointer;
-        letter-spacing: 0.05em;
-        transition: all 0.2s;
-        margin-top: 8px;
-      }
-
-      .play-btn:hover {
-        background: #79bcff;
-        transform: translateY(-1px);
-      }
-
-      .play-btn.paused {
-        background: var(--accent3);
-      }
-
-      .legend-title {
-        font-size: 11px;
-        font-family: "Space Mono", monospace;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        margin-bottom: 8px;
-      }
-
-      #legend-svg {
-        width: 100%;
-      }
-
-      .region-filters {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-
-      .region-check {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-        font-size: 13px;
-        color: var(--muted);
-        transition: color 0.2s;
-      }
-
-      .region-check:hover {
-        color: var(--text);
-      }
-
-      .region-check input[type="checkbox"] {
-        accent-color: var(--accent);
-        width: 14px;
-        height: 14px;
-      }
-
-      .divider {
-        border: none;
-        border-top: 1px solid var(--border);
-        margin: 0;
-      }
-
-      .map-area {
-        grid-column: 2;
-        grid-row: 1;
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        padding: 4px;
-        max-height: 600px;
-      }
-
-      #map-svg {
-        width: 100%;
-        height: 100%;
-      }
-
-      .state-path {
-        stroke: #0d1117;
-        stroke-width: 0.8;
-        cursor: pointer;
-        transition: stroke-width 0.15s;
-      }
-
-      .state-path:hover {
-        stroke: #fff;
-        stroke-width: 1.5;
-      }
-
-      .state-path.masked {
-        opacity: 0.15;
-      }
-
-      .state-path.highlighted {
-        stroke: var(--gold);
-        stroke-width: 2;
-      }
-
-      #tooltip {
-        position: fixed;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 10px 14px;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.15s;
-        font-size: 13px;
-        z-index: 1000;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-        max-width: 200px;
-      }
-
-      #tooltip .tt-name {
-        font-weight: 600;
-        font-size: 14px;
-        margin-bottom: 4px;
-      }
-
-      #tooltip .tt-value {
-        color: var(--accent);
-        font-family: "Space Mono", monospace;
-        font-size: 13px;
-      }
-
-      #tooltip .tt-label {
-        color: var(--muted);
-        font-size: 11px;
-      }
-
-      .right-panel {
-        grid-column: 3;
-        grid-row: 1 / 3;
-        background: var(--surface);
-        border-left: 1px solid var(--border);
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-      }
-
-      .panel-header {
-        padding: 16px 20px 12px;
-        border-bottom: 1px solid var(--border);
-      }
-
-      .panel-header h2 {
-        font-size: 13px;
-        font-weight: 600;
-        letter-spacing: -0.01em;
-      }
-
-      .panel-header p {
-        font-size: 11px;
-        color: var(--muted);
-        margin-top: 3px;
-        font-family: "Space Mono", monospace;
-      }
-
-      #line-chart-container {
-        flex: 1;
-        padding: 4px;
-        overflow: hidden;
-      }
-
-      #line-svg {
-        width: 100%;
-        height: 100%;
-      }
-
-      .no-selection {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        color: var(--muted);
-        font-size: 13px;
-        text-align: center;
-        line-height: 1.6;
-      }
-
-      .scatter-area {
-        grid-column: 2;
-        grid-row: 2;
-        border-top: 1px solid var(--border);
-        padding: 8px 12px;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        height: 600px;
-      }
-
-      .scatter-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 8px;
-      }
-
-      .scatter-header h3 {
-        font-size: 12px;
-        font-family: "Space Mono", monospace;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-      }
-
-      .scatter-note {
-        font-size: 11px;
-        color: var(--muted);
-      }
-
-      #scatter-container {
-        flex: 1;
-        overflow: hidden;
-      }
-
-      #scatter-svg {
-        width: 100%;
-        height: 100%;
-      }
-
-      .scatter-dot {
-        cursor: pointer;
-        transition: r 0.15s;
-      }
-
-      .scatter-dot.brushed {
-        stroke: var(--gold);
-        stroke-width: 2;
-      }
-
-      .scatter-dot.faded {
-        opacity: 0.15;
-      }
-
-      #selected-legend {
-        padding: 12px 20px;
-        border-top: 1px solid var(--border);
-        min-height: 50px;
-      }
-
-      .legend-items {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-
-      .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 11px;
-        background: var(--surface2);
-        padding: 3px 8px;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        cursor: pointer;
-      }
-
-      .legend-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-      }
-
-      .axis text {
-        fill: var(--muted);
-        font-size: 10px;
-        font-family: "DM Sans", sans-serif;
-      }
-
-      .axis line,
-      .axis path {
-        stroke: var(--border);
-      }
-
-      .grid line {
-        stroke: var(--border);
-        stroke-opacity: 0.5;
-      }
-
-      .loading {
-        position: fixed;
-        inset: 0;
-        background: var(--bg);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        gap: 16px;
-      }
-
-      .loading-title {
-        font-family: "Space Mono", monospace;
-        font-size: 14px;
-        color: var(--accent);
-        letter-spacing: 0.1em;
-      }
-
-      .loading-bar {
-        width: 200px;
-        height: 2px;
-        background: var(--border);
-        border-radius: 1px;
-        overflow: hidden;
-      }
-
-      .loading-fill {
-        height: 100%;
-        background: var(--accent);
-        border-radius: 1px;
-        animation: loadPulse 1.4s ease-in-out infinite;
-      }
-
-      @keyframes loadPulse {
-        0% {
-          width: 0%;
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --surface2: #1f2937;
+            --border: #30363d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --accent: #58a6ff;
+            --accent2: #3fb950;
+            --accent3: #f78166;
+            --accent4: #d2a8ff;
+            --gold: #e3b341;
         }
 
-        50% {
-          width: 70%;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        100% {
-          width: 100%;
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: "DM Sans", sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
-      }
 
-      .error-msg {
-        position: fixed;
-        inset: 0;
-        background: var(--bg);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        gap: 12px;
-        text-align: center;
-        padding: 40px;
-      }
+        header {
+            padding: 20px 32px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface);
+        }
 
-      .error-msg h2 {
-        color: var(--accent3);
-        font-size: 18px;
-      }
+        .logo {
+            font-family: "Space Mono", monospace;
+            font-size: 13px;
+            color: var(--accent);
+            letter-spacing: 0.05em;
+            opacity: 0.8;
+        }
 
-      .error-msg p {
-        color: var(--muted);
-        font-size: 14px;
-        max-width: 520px;
-        line-height: 1.7;
-      }
+        h1 {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
 
-      .error-msg code {
-        background: var(--surface2);
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-family: "Space Mono", monospace;
-        font-size: 12px;
-      }
+        .subtitle {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 2px;
+            font-family: "Space Mono", monospace;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 260px 1fr 300px;
+            grid-template-rows: 1.7fr 0.8fr;
+            height: calc(100vh - 65px);
+        }
+
+        .left-panel {
+            grid-row: 1 / 3;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 11px;
+            font-family: "Space Mono", monospace;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+
+        select {
+            width: 100%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: "DM Sans", sans-serif;
+            font-size: 14px;
+            appearance: none;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        select:hover,
+        select:focus {
+            border-color: var(--accent);
+            outline: none;
+        }
+
+        .year-display {
+            font-family: "Space Mono", monospace;
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--accent);
+            text-align: center;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            appearance: none;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            cursor: pointer;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 2px solid var(--bg);
+            box-shadow: 0 0 6px rgba(88, 166, 255, 0.5);
+        }
+
+        .play-btn {
+            width: 100%;
+            padding: 10px;
+            background: var(--accent);
+            color: var(--bg);
+            border: none;
+            border-radius: 6px;
+            font-family: "Space Mono", monospace;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.05em;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+
+        .play-btn:hover {
+            background: #79bcff;
+            transform: translateY(-1px);
+        }
+
+        .play-btn.paused {
+            background: var(--accent3);
+        }
+
+        .legend-title {
+            font-size: 11px;
+            font-family: "Space Mono", monospace;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+
+        #legend-svg {
+            width: 100%;
+        }
+
+        .region-filters {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .region-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--muted);
+            transition: color 0.2s;
+        }
+
+        .region-check:hover {
+            color: var(--text);
+        }
+
+        .region-check input[type="checkbox"] {
+            accent-color: var(--accent);
+            width: 14px;
+            height: 14px;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 0;
+        }
+
+        .map-area {
+            grid-column: 2;
+            grid-row: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 4px;
+            max-height: 600px;
+        }
+
+        #map-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .state-path {
+            stroke: #0d1117;
+            stroke-width: 0.8;
+            cursor: pointer;
+            transition: stroke-width 0.15s;
+        }
+
+        .state-path:hover {
+            stroke: #fff;
+            stroke-width: 1.5;
+        }
+
+        .state-path.masked {
+            opacity: 0.15;
+        }
+
+        .state-path.highlighted {
+            stroke: var(--gold);
+            stroke-width: 2;
+        }
+
+        #tooltip {
+            position: fixed;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s;
+            font-size: 13px;
+            z-index: 1000;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            max-width: 200px;
+        }
+
+        #tooltip .tt-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        #tooltip .tt-value {
+            color: var(--accent);
+            font-family: "Space Mono", monospace;
+            font-size: 13px;
+        }
+
+        #tooltip .tt-label {
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .right-panel {
+            grid-column: 3;
+            grid-row: 1 / 3;
+            background: var(--surface);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 16px 20px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-header h2 {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .panel-header p {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 3px;
+            font-family: "Space Mono", monospace;
+        }
+
+        #line-chart-container {
+            flex: 1;
+            padding: 4px;
+            overflow: hidden;
+        }
+
+        #line-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .no-selection {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--muted);
+            font-size: 13px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .scatter-area {
+            grid-column: 2;
+            grid-row: 2;
+            border-top: 1px solid var(--border);
+            padding: 8px 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+
+        .scatter-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .scatter-header h3 {
+            font-size: 12px;
+            font-family: "Space Mono", monospace;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .scatter-note {
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        #scatter-container {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        #scatter-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .scatter-dot {
+            cursor: pointer;
+            transition: r 0.15s;
+        }
+
+        .scatter-dot.brushed {
+            stroke: var(--gold);
+            stroke-width: 2;
+        }
+
+        .scatter-dot.faded {
+            opacity: 0.15;
+        }
+
+        #selected-legend {
+            padding: 12px 20px;
+            border-top: 1px solid var(--border);
+            min-height: 50px;
+        }
+
+        .legend-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            background: var(--surface2);
+            padding: 3px 8px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .axis text {
+            fill: var(--muted);
+            font-size: 10px;
+            font-family: "DM Sans", sans-serif;
+        }
+
+        .axis line,
+        .axis path {
+            stroke: var(--border);
+        }
+
+        .grid line {
+            stroke: var(--border);
+            stroke-opacity: 0.5;
+        }
+
+        .loading {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            gap: 16px;
+        }
+
+        .loading-title {
+            font-family: "Space Mono", monospace;
+            font-size: 14px;
+            color: var(--accent);
+            letter-spacing: 0.1em;
+        }
+
+        .loading-bar {
+            width: 200px;
+            height: 2px;
+            background: var(--border);
+            border-radius: 1px;
+            overflow: hidden;
+        }
+
+        .loading-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 1px;
+            animation: loadPulse 1.4s ease-in-out infinite;
+        }
+
+        @keyframes loadPulse {
+            0% {
+                width: 0%;
+            }
+
+            50% {
+                width: 70%;
+            }
+
+            100% {
+                width: 100%;
+            }
+        }
+
+        .error-msg {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            gap: 12px;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .error-msg h2 {
+            color: var(--accent3);
+            font-size: 18px;
+        }
+
+        .error-msg p {
+            color: var(--muted);
+            font-size: 14px;
+            max-width: 520px;
+            line-height: 1.7;
+        }
+
+        .error-msg code {
+            background: var(--surface2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: "Space Mono", monospace;
+            font-size: 12px;
+        }
     </style>
-  </head>
+</head>
 
-  <body>
+<body>
     <div class="loading" id="loading">
-      <div class="loading-title">UČITAVANJE PODATAKA...</div>
-      <div class="loading-bar">
-        <div class="loading-fill"></div>
-      </div>
-      <div
-        style="
+        <div class="loading-title">UČITAVANJE PODATAKA...</div>
+        <div class="loading-bar">
+            <div class="loading-fill"></div>
+        </div>
+        <div style="
           font-size: 12px;
           color: var(--muted);
           font-family: &quot;Space Mono&quot;, monospace;
-        "
-      >
-        states_all.csv + TopoJSON
-      </div>
+        ">
+            states_all.csv + TopoJSON
+        </div>
     </div>
 
     <header>
-      <div class="logo">EDU_VIZ / KV3</div>
-      <div>
-        <h1>U.S. Education Statistics</h1>
-        <div class="subtitle">Interactive Choropleth · 2000–2019</div>
-      </div>
-      <div
-        style="
+        <div class="logo">EDU_VIZ / KV3</div>
+        <div>
+            <h1>U.S. Education Statistics</h1>
+            <div class="subtitle">Interactive Choropleth · 2000–2019</div>
+        </div>
+        <div style="
           font-size: 11px;
           color: var(--muted);
           font-family: &quot;Space Mono&quot;, monospace;
           text-align: right;
-        "
-      >
-        D3.js v7 · TopoJSON<br />Ctrl+Click = multi-select
-      </div>
+        ">
+            D3.js v7 · TopoJSON<br />Ctrl+Click = multi-select
+        </div>
     </header>
 
     <div class="layout">
-      <!-- LEFT CONTROLS -->
-      <div class="left-panel">
-        <div class="control-group">
-          <label>Metrika</label>
-          <select id="metric-select">
-            <option value="spending">Rashod po učeniku ($)</option>
-            <option value="math">Prosj. rezultat matematike</option>
-            <option value="reading">Prosj. rezultat čitanja</option>
-            <option value="enrollment">Broj učenika</option>
-          </select>
+        <div class="left-panel">
+            <div class="control-group">
+                <label>Metrika</label>
+                <select id="metric-select">
+                    <option value="spending">Rashod po učeniku ($)</option>
+                    <option value="math">Prosj. rezultat matematike</option>
+                    <option value="reading">Prosj. rezultat čitanja</option>
+                    <option value="enrollment">Broj učenika</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Godina</label>
+                <div class="year-display" id="year-display">2000</div>
+                <input type="range" id="year-slider" min="2000" max="2019" value="2000" step="1" />
+                <button class="play-btn" id="play-btn">▶ PLAY ANIMACIJA</button>
+            </div>
+
+            <hr class="divider" />
+
+            <div>
+                <div class="legend-title">Legenda boja</div>
+                <svg id="legend-svg" height="50"></svg>
+            </div>
+
+            <hr class="divider" />
+
+            <div>
+                <div class="legend-title" style="margin-bottom: 10px">
+                    Filtar regija
+                </div>
+                <div class="region-filters" id="region-filters"></div>
+            </div>
         </div>
 
-        <div class="control-group">
-          <label>Godina</label>
-          <div class="year-display" id="year-display">2000</div>
-          <input
-            type="range"
-            id="year-slider"
-            min="2000"
-            max="2019"
-            value="2000"
-            step="1"
-          />
-          <button class="play-btn" id="play-btn">▶ PLAY ANIMACIJA</button>
+        <div class="map-area">
+            <svg id="map-svg"></svg>
         </div>
 
-        <hr class="divider" />
-
-        <div>
-          <div class="legend-title">Legenda boja</div>
-          <svg id="legend-svg" height="50"></svg>
+        <div class="right-panel">
+            <div class="panel-header">
+                <h2>Vremenski trend</h2>
+                <p>
+                    Klikni na državau da dodaš trend · Ctrl+Klik = višestruki odabir
+                </p>
+            </div>
+            <div id="line-chart-container">
+                <div class="no-selection" id="no-sel-msg">
+                    Klikni na saveznu<br />državu na karti
+                </div>
+                <svg id="line-svg" style="display: none"></svg>
+            </div>
+            <div id="selected-legend">
+                <div class="legend-items" id="legend-items"></div>
+            </div>
         </div>
 
-        <hr class="divider" />
+        <div class="scatter-area">
+            <div class="scatter-header">
+                <h3 id="scatter-title">Scatter</h3>
 
-        <div>
-          <div class="legend-title" style="margin-bottom: 10px">
-            Filtar regija
-          </div>
-          <div class="region-filters" id="region-filters"></div>
-        </div>
-      </div>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
 
-      <!-- MAP -->
-      <div class="map-area">
-        <svg id="map-svg"></svg>
-      </div>
+                    <label style="font-size:12px">X:</label>
+                    <select id="scatter-x" style="width:160px; padding:4px 8px; font-size:12px">
+                        <option value="spending">Rashod po učeniku</option>
+                        <option value="math">Matematika</option>
+                        <option value="reading">Čitanje</option>
+                        <option value="enrollment">Broj učenika</option>
+                    </select>
 
-      <!-- RIGHT PANEL — trend chart -->
-      <div class="right-panel">
-        <div class="panel-header">
-          <h2>Vremenski trend</h2>
-          <p>
-            Klikni na državau da dodaš trend · Ctrl+Klik = višestruki odabir
-          </p>
-        </div>
-        <div id="line-chart-container">
-          <div class="no-selection" id="no-sel-msg">
-            Klikni na saveznu<br />državu na karti
-          </div>
-          <svg id="line-svg" style="display: none"></svg>
-        </div>
-        <div id="selected-legend">
-          <div class="legend-items" id="legend-items"></div>
-        </div>
-      </div>
+                    <label style="font-size:12px">Y:</label>
+                    <select id="scatter-y" style="width:160px; padding:4px 8px; font-size:12px">
+                        <option value="math">Matematika</option>
+                        <option value="spending">Rashod po učeniku</option>
+                        <option value="reading">Čitanje</option>
+                        <option value="enrollment">Broj učenika</option>
+                    </select>
 
-      <!-- SCATTER -->
-      <div class="scatter-area">
-        <div class="scatter-header">
-          <h3>Scatter: Rashod vs. Matematika</h3>
-          <div style="display: flex; gap: 10px; align-items: center">
-            <select
-              id="scatter-stat-select"
-              style="width: 140px; padding: 4px 8px; font-size: 12px"
-            >
-              <option value="none">Bez linija</option>
-              <option value="median">Medijan</option>
-              <option value="quartiles">Kvartili</option>
-              <option value="deciles">Decili</option>
-            </select>
-            <span class="scatter-note">Klikni točku = highlight na karti</span>
-          </div>
-        </div>
-        <div id="scatter-container">
-          <svg id="scatter-svg"></svg>
-        </div>
-      </div>
-    </div>
+                    <select id="scatter-stat-select" style="width:140px; padding:4px 8px; font-size:12px">
+                        <option value="none">Bez linija</option>
+                        <option value="median">Medijan</option>
+                        <option value="quartiles">Kvartili</option>
+                        <option value="deciles">Decili</option>
+                    </select>
 
-    <div id="tooltip">
-      <div class="tt-name" id="tt-name"></div>
-      <div class="tt-label" id="tt-label"></div>
-      <div class="tt-value" id="tt-value"></div>
-    </div>
+                    <span class="scatter-note">
+                        Klikni točku = highlight na karti
+                    </span>
 
-    <script>
+                </div>
+            </div>
+
+            <div id="scatter-container">
+                <svg id="scatter-svg"></svg>
+            </div>
+        </div>
+
+        <div id="tooltip">
+            <div class="tt-name" id="tt-name"></div>
+            <div class="tt-label" id="tt-label"></div>
+            <div class="tt-value" id="tt-value"></div>
+        </div>
+
+        <script>
             const TOPO_URL =
-        "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
-      const CSV_PATH = "states_all.csv";
+                "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
+            const CSV_PATH = "states_all.csv";
 
-      const FIPS_TO_ABBR = {
-        "01": "AL",
-        "02": "AK",
-        "04": "AZ",
-        "05": "AR",
-        "06": "CA",
-        "08": "CO",
-        "09": "CT",
-        10: "DE",
-        11: "DC",
-        12: "FL",
-        13: "GA",
-        15: "HI",
-        16: "ID",
-        17: "IL",
-        18: "IN",
-        19: "IA",
-        20: "KS",
-        21: "KY",
-        22: "LA",
-        23: "ME",
-        24: "MD",
-        25: "MA",
-        26: "MI",
-        27: "MN",
-        28: "MS",
-        29: "MO",
-        30: "MT",
-        31: "NE",
-        32: "NV",
-        33: "NH",
-        34: "NJ",
-        35: "NM",
-        36: "NY",
-        37: "NC",
-        38: "ND",
-        39: "OH",
-        40: "OK",
-        41: "OR",
-        42: "PA",
-        44: "RI",
-        45: "SC",
-        46: "SD",
-        47: "TN",
-        48: "TX",
-        49: "UT",
-        50: "VT",
-        51: "VA",
-        53: "WA",
-        54: "WV",
-        55: "WI",
-        56: "WY",
-      };
+            const FIPS_TO_ABBR = {
+                "01": "AL",
+                "02": "AK",
+                "04": "AZ",
+                "05": "AR",
+                "06": "CA",
+                "08": "CO",
+                "09": "CT",
+                10: "DE",
+                11: "DC",
+                12: "FL",
+                13: "GA",
+                15: "HI",
+                16: "ID",
+                17: "IL",
+                18: "IN",
+                19: "IA",
+                20: "KS",
+                21: "KY",
+                22: "LA",
+                23: "ME",
+                24: "MD",
+                25: "MA",
+                26: "MI",
+                27: "MN",
+                28: "MS",
+                29: "MO",
+                30: "MT",
+                31: "NE",
+                32: "NV",
+                33: "NH",
+                34: "NJ",
+                35: "NM",
+                36: "NY",
+                37: "NC",
+                38: "ND",
+                39: "OH",
+                40: "OK",
+                41: "OR",
+                42: "PA",
+                44: "RI",
+                45: "SC",
+                46: "SD",
+                47: "TN",
+                48: "TX",
+                49: "UT",
+                50: "VT",
+                51: "VA",
+                53: "WA",
+                54: "WV",
+                55: "WI",
+                56: "WY",
+            };
 
-      const ABBR_TO_FULL = {
-        AL: "Alabama",
-        AK: "Alaska",
-        AZ: "Arizona",
-        AR: "Arkansas",
-        CA: "California",
-        CO: "Colorado",
-        CT: "Connecticut",
-        DE: "Delaware",
-        DC: "District of Columbia",
-        FL: "Florida",
-        GA: "Georgia",
-        HI: "Hawaii",
-        ID: "Idaho",
-        IL: "Illinois",
-        IN: "Indiana",
-        IA: "Iowa",
-        KS: "Kansas",
-        KY: "Kentucky",
-        LA: "Louisiana",
-        ME: "Maine",
-        MD: "Maryland",
-        MA: "Massachusetts",
-        MI: "Michigan",
-        MN: "Minnesota",
-        MS: "Mississippi",
-        MO: "Missouri",
-        MT: "Montana",
-        NE: "Nebraska",
-        NV: "Nevada",
-        NH: "New Hampshire",
-        NJ: "New Jersey",
-        NM: "New Mexico",
-        NY: "New York",
-        NC: "North Carolina",
-        ND: "North Dakota",
-        OH: "Ohio",
-        OK: "Oklahoma",
-        OR: "Oregon",
-        PA: "Pennsylvania",
-        RI: "Rhode Island",
-        SC: "South Carolina",
-        SD: "South Dakota",
-        TN: "Tennessee",
-        TX: "Texas",
-        UT: "Utah",
-        VT: "Vermont",
-        VA: "Virginia",
-        WA: "Washington",
-        WV: "West Virginia",
-        WI: "Wisconsin",
-        WY: "Wyoming",
-      };
+            const ABBR_TO_FULL = {
+                AL: "Alabama",
+                AK: "Alaska",
+                AZ: "Arizona",
+                AR: "Arkansas",
+                CA: "California",
+                CO: "Colorado",
+                CT: "Connecticut",
+                DE: "Delaware",
+                DC: "District of Columbia",
+                FL: "Florida",
+                GA: "Georgia",
+                HI: "Hawaii",
+                ID: "Idaho",
+                IL: "Illinois",
+                IN: "Indiana",
+                IA: "Iowa",
+                KS: "Kansas",
+                KY: "Kentucky",
+                LA: "Louisiana",
+                ME: "Maine",
+                MD: "Maryland",
+                MA: "Massachusetts",
+                MI: "Michigan",
+                MN: "Minnesota",
+                MS: "Mississippi",
+                MO: "Missouri",
+                MT: "Montana",
+                NE: "Nebraska",
+                NV: "Nevada",
+                NH: "New Hampshire",
+                NJ: "New Jersey",
+                NM: "New Mexico",
+                NY: "New York",
+                NC: "North Carolina",
+                ND: "North Dakota",
+                OH: "Ohio",
+                OK: "Oklahoma",
+                OR: "Oregon",
+                PA: "Pennsylvania",
+                RI: "Rhode Island",
+                SC: "South Carolina",
+                SD: "South Dakota",
+                TN: "Tennessee",
+                TX: "Texas",
+                UT: "Utah",
+                VT: "Vermont",
+                VA: "Virginia",
+                WA: "Washington",
+                WV: "West Virginia",
+                WI: "Wisconsin",
+                WY: "Wyoming",
+            };
 
-      const CSV_TO_ABBR = {};
-      Object.entries(ABBR_TO_FULL).forEach(([abbr, full]) => {
-        CSV_TO_ABBR[full.toUpperCase()] = abbr;
-        CSV_TO_ABBR[abbr] = abbr;
-      });
+            const CSV_TO_ABBR = {};
+            Object.entries(ABBR_TO_FULL).forEach(([abbr, full]) => {
+                CSV_TO_ABBR[full.toUpperCase()] = abbr;
+                CSV_TO_ABBR[abbr] = abbr;
+            });
 
-      const REGIONS = {
-        Northeast: ["ME", "NH", "VT", "MA", "RI", "CT", "NY", "NJ", "PA"],
-        Midwest: [
-          "OH",
-          "MI",
-          "IN",
-          "IL",
-          "WI",
-          "MN",
-          "IA",
-          "MO",
-          "ND",
-          "SD",
-          "NE",
-          "KS",
-        ],
-        South: [
-          "DE",
-          "MD",
-          "DC",
-          "VA",
-          "WV",
-          "NC",
-          "SC",
-          "GA",
-          "FL",
-          "KY",
-          "TN",
-          "AL",
-          "MS",
-          "AR",
-          "LA",
-          "OK",
-          "TX",
-        ],
-        West: [
-          "MT",
-          "ID",
-          "WY",
-          "CO",
-          "NM",
-          "AZ",
-          "UT",
-          "NV",
-          "WA",
-          "OR",
-          "CA",
-          "AK",
-          "HI",
-        ],
-      };
+            const REGIONS = {
+                Northeast: ["ME", "NH", "VT", "MA", "RI", "CT", "NY", "NJ", "PA"],
+                Midwest: [
+                    "OH",
+                    "MI",
+                    "IN",
+                    "IL",
+                    "WI",
+                    "MN",
+                    "IA",
+                    "MO",
+                    "ND",
+                    "SD",
+                    "NE",
+                    "KS",
+                ],
+                South: [
+                    "DE",
+                    "MD",
+                    "DC",
+                    "VA",
+                    "WV",
+                    "NC",
+                    "SC",
+                    "GA",
+                    "FL",
+                    "KY",
+                    "TN",
+                    "AL",
+                    "MS",
+                    "AR",
+                    "LA",
+                    "OK",
+                    "TX",
+                ],
+                West: [
+                    "MT",
+                    "ID",
+                    "WY",
+                    "CO",
+                    "NM",
+                    "AZ",
+                    "UT",
+                    "NV",
+                    "WA",
+                    "OR",
+                    "CA",
+                    "AK",
+                    "HI",
+                ],
+            };
 
-      const STATE_TO_REGION = {};
-      Object.entries(REGIONS).forEach(([region, states]) => {
-        states.forEach((s) => {
-          STATE_TO_REGION[s] = region;
-        });
-      });
+            const STATE_TO_REGION = {};
+            Object.entries(REGIONS).forEach(([region, states]) => {
+                states.forEach((s) => {
+                    STATE_TO_REGION[s] = region;
+                });
+            });
 
-      const PALETTE = [
-        "#58a6ff",
-        "#3fb950",
-        "#f78166",
-        "#d2a8ff",
-        "#e3b341",
-        "#79c0ff",
-        "#56d364",
-        "#ffa657",
-      ];
-      const METRICS = {
-        spending: {
-          label: "Rashod po učeniku",
-          format: (d) => "$" + d3.format(",.0f")(d),
-          col: "spending_per_pupil",
-          colors: d3.interpolateYlOrRd,
-        },
-        math: {
-          label: "Prosj. matematika (4. razred)",
-          format: (d) => d3.format(".1f")(d),
-          col: "AVG_MATH_4_SCORE",
-          colors: d3.interpolateBlues,
-        },
-        reading: {
-          label: "Prosj. čitanje (4. razred)",
-          format: (d) => d3.format(".1f")(d),
-          col: "AVG_READING_4_SCORE",
-          colors: d3.interpolateGreens,
-        },
-        enrollment: {
-          label: "Broj učenika",
-          format: (d) => d3.format(",.0f")(d),
-          col: "ENROLL",
-          colors: d3.interpolatePurples,
-        },
-      };
+            const PALETTE = [
+                "#58a6ff",
+                "#3fb950",
+                "#f78166",
+                "#d2a8ff",
+                "#e3b341",
+                "#79c0ff",
+                "#56d364",
+                "#ffa657",
+            ];
+            const METRICS = {
+                spending: {
+                    label: "Rashod po učeniku",
+                    format: (d) => "$" + d3.format(",.0f")(d),
+                    col: "spending_per_pupil",
+                    colors: d3.interpolateYlOrRd,
+                },
+                math: {
+                    label: "Prosj. matematika (4. razred)",
+                    format: (d) => d3.format(".1f")(d),
+                    col: "AVG_MATH_4_SCORE",
+                    colors: d3.interpolateBlues,
+                },
+                reading: {
+                    label: "Prosj. čitanje (4. razred)",
+                    format: (d) => d3.format(".1f")(d),
+                    col: "AVG_READING_4_SCORE",
+                    colors: d3.interpolateGreens,
+                },
+                enrollment: {
+                    label: "Broj učenika",
+                    format: (d) => d3.format(",.0f")(d),
+                    col: "ENROLL",
+                    colors: d3.interpolatePurples,
+                },
+            };
 
-      let eduData = {};
-      let topoData = null;
-      let currentMetric = "spending";
-      let currentYear = 2000;
-      let selectedStates = [];
-      let activeRegions = new Set(Object.keys(REGIONS));
-      let highlightedFromScatter = null;
-      let playInterval = null;
-      let colorScale;
+            let eduData = {};
+            let topoData = null;
+            let currentMetric = "spending";
+            let currentYear = 2000;
+            let selectedStates = [];
+            let scatterXMetric = "spending";
+            let scatterYMetric = "math";
+            let activeRegions = new Set(Object.keys(REGIONS));
+            let highlightedFromScatter = null;
+            let playInterval = null;
+            let colorScale;
 
-      async function init() {
-        try {
-          const [topo, csv] = await Promise.all([
-            d3.json(TOPO_URL),
-            d3.csv(CSV_PATH),
-          ]);
+            async function init() {
+                try {
+                    const [topo, csv] = await Promise.all([
+                        d3.json(TOPO_URL),
+                        d3.csv(CSV_PATH),
+                    ]);
 
-          topoData = topo;
-          processCSV(csv);
-          document.getElementById("loading").style.display = "none";
-          buildUI();
-        } catch (e) {
-          console.error(e);
-          showError(e);
-        }
-      }
+                    topoData = topo;
+                    processCSV(csv);
+                    document.getElementById("loading").style.display = "none";
+                    buildUI();
+                } catch (e) {
+                    console.error(e);
+                    showError(e);
+                }
+            }
 
-      function processCSV(rows) {
-        rows.forEach((row) => {
-          const abbr = CSV_TO_ABBR[row.STATE?.trim()?.toUpperCase()];
-          if (!abbr) return;
-          const year = +row.YEAR;
-          if (year < 2000 || year > 2019) return;
+            function processCSV(rows) {
+                rows.forEach((row) => {
+                    const abbr = CSV_TO_ABBR[row.STATE?.trim()?.toUpperCase()];
+                    if (!abbr) return;
+                    const year = +row.YEAR;
+                    if (year < 2000 || year > 2019) return;
 
-          const enroll = +row.ENROLL || null;
-          const total = +row.TOTAL_EXPENDITURE || null;
-          const math = +row.AVG_MATH_4_SCORE || null;
-          const read = +row.AVG_READING_4_SCORE || null;
+                    const enroll = +row.ENROLL || null;
+                    const total = +row.TOTAL_EXPENDITURE || null;
+                    const math = +row.AVG_MATH_4_SCORE || null;
+                    const read = +row.AVG_READING_4_SCORE || null;
 
-          if (!eduData[abbr]) eduData[abbr] = {};
-          eduData[abbr][year] = {
-            spending_per_pupil:
-              enroll && total ? (total * 1000) / enroll : null,
-            AVG_MATH_4_SCORE: math,
-            AVG_READING_4_SCORE: read,
-            ENROLL: enroll,
-            state: abbr,
-          };
-        });
-      }
+                    if (!eduData[abbr]) eduData[abbr] = {};
+                    eduData[abbr][year] = {
+                        spending_per_pupil:
+                            enroll && total ? (total * 1000) / enroll : null,
+                        AVG_MATH_4_SCORE: math,
+                        AVG_READING_4_SCORE: read,
+                        ENROLL: enroll,
+                        state: abbr,
+                    };
+                });
+            }
 
-      function showError(e) {
-        document.getElementById("loading").innerHTML = `
+            function showError(e) {
+                document.getElementById("loading").innerHTML = `
     <div class="error-msg">
       <h2>⚠ Greška pri učitavanju</h2>
       <p>Nije moguće učitati <code>states_all.csv</code>. Provjeri je li datoteka u istom direktoriju kao <code>index.html</code> i pokreni lokalni server:</p>
@@ -929,504 +935,552 @@
       <p style="margin-top:8px;color:var(--accent3);font-size:12px">${e.message || e}</p>
     </div>
   `;
-      }
-
-      function buildUI() {
-        buildRegionFilters();
-        buildMap();
-        buildScatter();
-        updateViz();
-      }
-
-      function buildRegionFilters() {
-        const container = document.getElementById("region-filters");
-        Object.keys(REGIONS).forEach((region) => {
-          const label = document.createElement("label");
-          label.className = "region-check";
-          label.innerHTML = `<input type="checkbox" checked value="${region}"> ${region}`;
-          label.querySelector("input").addEventListener("change", (e) => {
-            if (e.target.checked) activeRegions.add(region);
-            else activeRegions.delete(region);
-            updateMap();
-            updateScatter();
-          });
-          container.appendChild(label);
-        });
-      }
-
-      let mapSvg, mapG, paths, projection, pathGen;
-
-      function buildMap() {
-        const el = document.getElementById("map-svg");
-        mapSvg = d3.select(el);
-
-        const states = topojson.feature(topoData, topoData.objects.states);
-        projection = d3
-          .geoAlbersUsa()
-          .fitSize([el.clientWidth || 700, el.clientHeight || 400], states);
-        pathGen = d3.geoPath().projection(projection);
-
-        mapG = mapSvg.append("g");
-
-        paths = mapG
-          .selectAll(".state-path")
-          .data(states.features)
-          .join("path")
-          .attr("class", "state-path")
-          .attr("d", pathGen)
-          .on("mouseover", onStateHover)
-          .on("mousemove", onStateMove)
-          .on("mouseout", onStateOut)
-          .on("click", onStateClick);
-
-        new ResizeObserver(() => {
-          const w = el.clientWidth,
-            h = el.clientHeight;
-          if (!w || !h) return;
-          projection.fitSize([w, h], states);
-          pathGen = d3.geoPath().projection(projection);
-          paths.attr("d", pathGen);
-        }).observe(el);
-      }
-
-      function getVal(abbr, year, metric) {
-        return eduData[abbr]?.[year]?.[METRICS[metric].col] ?? null;
-      }
-
-      function updateMap() {
-        const col = METRICS[currentMetric].col;
-        const vals = [];
-        Object.keys(eduData).forEach((abbr) => {
-          const v = getVal(abbr, currentYear, currentMetric);
-          if (v !== null) vals.push(v);
-        });
-        const [minV, maxV] = d3.extent(vals);
-        colorScale = d3
-          .scaleSequential(METRICS[currentMetric].colors)
-          .domain([minV, maxV]);
-
-        paths
-          .transition()
-          .duration(400)
-          .attr("fill", (d) => {
-            const abbr = FIPS_TO_ABBR[String(d.id).padStart(2, "0")];
-            if (!abbr) return "#333";
-            const v = getVal(abbr, currentYear, currentMetric);
-            return v !== null ? colorScale(v) : "#2a2a2a";
-          })
-          .attr("opacity", (d) => {
-            const abbr = FIPS_TO_ABBR[String(d.id).padStart(2, "0")];
-            const region = STATE_TO_REGION[abbr];
-            return region && activeRegions.has(region) ? 1 : 0.12;
-          });
-
-        paths.classed("highlighted", (d) => {
-          const abbr = FIPS_TO_ABBR[String(d.id).padStart(2, "0")];
-          return highlightedFromScatter && highlightedFromScatter === abbr;
-        });
-
-        updateLegend(minV, maxV);
-      }
-
-      function updateLegend(minV, maxV) {
-        const svg = d3.select("#legend-svg");
-        const W = document.getElementById("legend-svg").clientWidth || 220;
-        const H = 50;
-        svg.attr("width", W).attr("height", H);
-        svg.selectAll("*").remove();
-
-        const defs = svg.append("defs");
-        const grad = defs.append("linearGradient").attr("id", "leg-grad");
-        const n = 10;
-        d3.range(n + 1).forEach((i) => {
-          grad
-            .append("stop")
-            .attr("offset", (i / n) * 100 + "%")
-            .attr("stop-color", colorScale(minV + (maxV - minV) * (i / n)));
-        });
-
-        svg
-          .append("rect")
-          .attr("x", 0)
-          .attr("y", 18)
-          .attr("width", W)
-          .attr("height", 14)
-          .attr("rx", 3)
-          .attr("fill", "url(#leg-grad)");
-
-        const fmt = METRICS[currentMetric].format;
-        svg
-          .append("text")
-          .attr("x", 0)
-          .attr("y", 12)
-          .attr("fill", "#8b949e")
-          .attr("font-size", 10)
-          .attr("font-family", "Space Mono,monospace")
-          .text(fmt(minV));
-        svg
-          .append("text")
-          .attr("x", W)
-          .attr("y", 12)
-          .attr("fill", "#8b949e")
-          .attr("font-size", 10)
-          .attr("font-family", "Space Mono,monospace")
-          .attr("text-anchor", "end")
-          .text(fmt(maxV));
-      }
-
-      const tooltip = document.getElementById("tooltip");
-
-      function onStateHover(event, d) {
-        const abbr = FIPS_TO_ABBR[String(d.id).padStart(2, "0")];
-        if (!abbr) return;
-        const v = getVal(abbr, currentYear, currentMetric);
-        document.getElementById("tt-name").textContent =
-          ABBR_TO_FULL[abbr] || abbr;
-        document.getElementById("tt-label").textContent =
-          METRICS[currentMetric].label;
-        document.getElementById("tt-value").textContent =
-          v !== null ? METRICS[currentMetric].format(v) : "N/A";
-        tooltip.style.opacity = 1;
-      }
-
-      function onStateMove(event) {
-        tooltip.style.left = event.clientX + 12 + "px";
-        tooltip.style.top = event.clientY - 30 + "px";
-      }
-
-      function onStateOut() {
-        tooltip.style.opacity = 0;
-      }
-
-      function onStateClick(event, d) {
-        const abbr = FIPS_TO_ABBR[String(d.id).padStart(2, "0")];
-        if (!abbr) return;
-        if (event.ctrlKey || event.metaKey) {
-          if (selectedStates.includes(abbr)) {
-            selectedStates = selectedStates.filter((s) => s !== abbr);
-          } else if (selectedStates.length < 8) {
-            selectedStates.push(abbr);
-          }
-        } else {
-          selectedStates = [abbr];
-        }
-        updateLineChart();
-        updateSelectedLegend();
-      }
-
-      function updateLineChart() {
-        const container = document.getElementById("line-chart-container");
-        const noMsg = document.getElementById("no-sel-msg");
-        const svg = d3.select("#line-svg");
-
-        if (selectedStates.length === 0) {
-          noMsg.style.display = "flex";
-          document.getElementById("line-svg").style.display = "none";
-          return;
-        }
-
-        noMsg.style.display = "none";
-        document.getElementById("line-svg").style.display = "block";
-        svg.selectAll("*").remove();
-
-        const W = container.clientWidth - 48;
-        const H = container.clientHeight - 24;
-        const margin = { top: 10, right: 20, bottom: 30, left: 52 };
-        const iW = W - margin.left - margin.right;
-        const iH = H - margin.top - margin.bottom;
-
-        const years = d3.range(2000, 2020);
-        const allVals = [];
-        selectedStates.forEach((abbr) => {
-          years.forEach((y) => {
-            const v = getVal(abbr, y, currentMetric);
-            if (v !== null) allVals.push(v);
-          });
-        });
-
-        const xScale = d3.scaleLinear().domain([2000, 2019]).range([0, iW]);
-        const yScale = d3
-          .scaleLinear()
-          .domain([d3.min(allVals) * 0.95, d3.max(allVals) * 1.02])
-          .range([iH, 0]);
-
-        const g = svg
-          .append("g")
-          .attr("transform", `translate(${margin.left},${margin.top})`);
-
-        g.append("g")
-          .attr("class", "grid")
-          .call(d3.axisLeft(yScale).tickSize(-iW).tickFormat(""))
-          .select(".domain")
-          .remove();
-
-        g.append("g")
-          .attr("class", "axis")
-          .attr("transform", `translate(0,${iH})`)
-          .call(d3.axisBottom(xScale).tickFormat(d3.format("d")).ticks(6));
-        g.append("g")
-          .attr("class", "axis")
-          .call(
-            d3
-              .axisLeft(yScale)
-              .ticks(5)
-              .tickFormat((v) => {
-                if (currentMetric === "spending")
-                  return "$" + d3.format("~s")(v);
-                if (currentMetric === "enrollment") return d3.format("~s")(v);
-                return d3.format(".0f")(v);
-              }),
-          );
-
-        const yearLine = g
-          .append("line")
-          .attr("x1", xScale(currentYear))
-          .attr("x2", xScale(currentYear))
-          .attr("y1", 0)
-          .attr("y2", iH)
-          .attr("stroke", "#e3b341")
-          .attr("stroke-width", 1)
-          .attr("stroke-dasharray", "4,3")
-          .attr("opacity", 0.7);
-
-        const line = d3
-          .line()
-          .defined((d) => d !== null)
-          .x((d, i) => xScale(years[i]))
-          .y((d) => yScale(d))
-          .curve(d3.curveMonotoneX);
-
-        selectedStates.forEach((abbr, i) => {
-          const vals = years.map((y) => getVal(abbr, y, currentMetric));
-          const color = PALETTE[i % PALETTE.length];
-
-          g.append("path")
-            .datum(vals)
-            .attr("fill", "none")
-            .attr("stroke", color)
-            .attr("stroke-width", 2)
-            .attr("d", line);
-
-          g.selectAll(`.dot-${i}`)
-            .data(vals.map((v, j) => ({ v, j })).filter((d) => d.v !== null))
-            .join("circle")
-            .attr("cx", (d) => xScale(years[d.j]))
-            .attr("cy", (d) => yScale(d.v))
-            .attr("r", 3)
-            .attr("fill", color);
-        });
-      }
-
-      function updateSelectedLegend() {
-        const container = document.getElementById("legend-items");
-        container.innerHTML = "";
-        selectedStates.forEach((abbr, i) => {
-          const color = PALETTE[i % PALETTE.length];
-          const item = document.createElement("div");
-          item.className = "legend-item";
-          item.innerHTML = `<div class="legend-dot" style="background:${color}"></div>${abbr}`;
-          item.addEventListener("click", () => {
-            selectedStates = selectedStates.filter((s) => s !== abbr);
-            updateLineChart();
-            updateSelectedLegend();
-          });
-          container.appendChild(item);
-        });
-      }
-
-      let scatterDots;
-
-      function buildScatter() {}
-
-      function updateScatter() {
-        const container = document.getElementById("scatter-container");
-        const svg = d3.select("#scatter-svg");
-        svg.selectAll("*").remove();
-
-        const W = container.clientWidth || 500;
-        const H = container.clientHeight || 160;
-        const margin = { top: 8, right: 16, bottom: 28, left: 52 };
-        const iW = W - margin.left - margin.right;
-        const iH = H - margin.top - margin.bottom;
-
-        const states = Object.keys(FIPS_TO_ABBR).map(
-          (fips) => FIPS_TO_ABBR[fips],
-        );
-        const data = states
-          .map((abbr) => {
-            const region = STATE_TO_REGION[abbr];
-            if (!activeRegions.has(region)) return null;
-            const sp = getVal(abbr, currentYear, "spending");
-            const mt = getVal(abbr, currentYear, "math");
-            if (sp === null || mt === null) return null;
-            return { abbr, sp, mt };
-          })
-          .filter(Boolean);
-
-        const xScale = d3
-          .scaleLinear()
-          .domain(d3.extent(data, (d) => d.sp))
-          .nice()
-          .range([0, iW]);
-        const yScale = d3
-          .scaleLinear()
-          .domain(d3.extent(data, (d) => d.mt))
-          .nice()
-          .range([iH, 0]);
-
-        const g = svg
-          .append("g")
-          .attr("transform", `translate(${margin.left},${margin.top})`);
-
-        g.append("g")
-          .attr("class", "axis")
-          .attr("transform", `translate(0,${iH})`)
-          .call(
-            d3
-              .axisBottom(xScale)
-              .ticks(5)
-              .tickFormat((d) => "$" + d3.format("~s")(d)),
-          );
-        g.append("g").attr("class", "axis").call(d3.axisLeft(yScale).ticks(4));
-
-        g.append("text")
-          .attr("x", iW / 2)
-          .attr("y", iH + 24)
-          .attr("text-anchor", "middle")
-          .attr("fill", "#8b949e")
-          .attr("font-size", 10)
-          .attr("font-family", "Space Mono,monospace")
-          .text("Rashod po učeniku ($)");
-
-        const statMode =
-          document.getElementById("scatter-stat-select")?.value || "none";
-        if (statMode !== "none") {
-          const drawV = (x, c = "#e3b341") =>
-            g
-              .append("line")
-              .attr("x1", x)
-              .attr("x2", x)
-              .attr("y1", 0)
-              .attr("y2", iH)
-              .attr("stroke", c)
-              .attr("stroke-dasharray", "4,4");
-          const drawH = (y, c = "#e3b341") =>
-            g
-              .append("line")
-              .attr("x1", 0)
-              .attr("x2", iW)
-              .attr("y1", y)
-              .attr("y2", y)
-              .attr("stroke", c)
-              .attr("stroke-dasharray", "4,4");
-          const probs =
-            statMode === "median"
-              ? [0.5]
-              : statMode === "quartiles"
-                ? [0.25, 0.5, 0.75]
-                : d3.range(0.1, 1, 0.1);
-          probs.forEach((p) => {
-            drawV(
-              xScale(d3.quantile(data.map((d) => d.sp).sort(d3.ascending), p)),
-            );
-            drawH(
-              yScale(d3.quantile(data.map((d) => d.mt).sort(d3.ascending), p)),
-            );
-          });
-        }
-
-        scatterDots = g
-          .selectAll(".scatter-dot")
-          .data(data)
-          .join("circle")
-          .attr("class", "scatter-dot")
-          .attr("cx", (d) => xScale(d.sp))
-          .attr("cy", (d) => yScale(d.mt))
-          .attr("r", 5)
-          .attr("fill", (d) => {
-            const idx = selectedStates.indexOf(d.abbr);
-            return idx >= 0 ? PALETTE[idx % PALETTE.length] : "#58a6ff";
-          })
-          .attr("opacity", 0.75)
-          .on("mouseover", (event, d) => {
-            document.getElementById("tt-name").textContent =
-              ABBR_TO_FULL[d.abbr] || d.abbr;
-            document.getElementById("tt-label").textContent =
-              "Rashod: " +
-              METRICS.spending.format(d.sp) +
-              " | Mat: " +
-              d3.format(".1f")(d.mt);
-            document.getElementById("tt-value").textContent = "";
-            tooltip.style.opacity = 1;
-          })
-          .on("mousemove", onStateMove)
-          .on("mouseout", () => {
-            tooltip.style.opacity = 0;
-            highlightedFromScatter = null;
-            updateMap();
-          })
-          .on("click", (event, d) => {
-            highlightedFromScatter = d.abbr;
-            updateMap();
-          });
-      }
-
-      document
-        .getElementById("metric-select")
-        .addEventListener("change", (e) => {
-          currentMetric = e.target.value;
-          updateViz();
-        });
-
-      document.getElementById("year-slider").addEventListener("input", (e) => {
-        currentYear = +e.target.value;
-        document.getElementById("year-display").textContent = currentYear;
-        updateMap();
-        updateScatter();
-        updateLineChart();
-      });
-
-      const playBtn = document.getElementById("play-btn");
-      playBtn.addEventListener("click", () => {
-        if (playInterval) {
-          clearInterval(playInterval);
-          playInterval = null;
-          playBtn.textContent = "▶ PLAY ANIMACIJA";
-          playBtn.classList.remove("paused");
-        } else {
-          playBtn.textContent = "⏸ PAUZIRAJ";
-          playBtn.classList.add("paused");
-          if (currentYear >= 2019) {
-            currentYear = 2000;
-          }
-          playInterval = setInterval(() => {
-            currentYear++;
-            document.getElementById("year-display").textContent = currentYear;
-            document.getElementById("year-slider").value = currentYear;
-            updateMap();
-            updateScatter();
-            updateLineChart();
-            if (currentYear >= 2019) {
-              clearInterval(playInterval);
-              playInterval = null;
-              playBtn.textContent = "▶ PLAY ANIMACIJA";
-              playBtn.classList.remove("paused");
             }
-          }, 850);
-        }
-      });
 
-      document
-        .getElementById("scatter-stat-select")
-        ?.addEventListener("change", () => updateScatter());
+            function buildUI() {
+                buildRegionFilters();
+                buildMap();
+                buildScatter();
+                updateViz();
+            }
 
-      function updateViz() {
-        updateMap();
-        updateScatter();
-        updateLineChart();
-      }
+            function buildRegionFilters() {
+                const container = document.getElementById("region-filters");
+                Object.keys(REGIONS).forEach((region) => {
+                    const label = document.createElement("label");
+                    label.className = "region-check";
+                    label.innerHTML = `<input type="checkbox" checked value="${region}"> ${region}`;
+                    label.querySelector("input").addEventListener("change", (e) => {
+                        if (e.target.checked) activeRegions.add(region);
+                        else activeRegions.delete(region);
+                        updateMap();
+                        updateScatter();
+                    });
+                    container.appendChild(label);
+                });
+            }
 
-      init();
-    </script>
-  </body>
+            let mapSvg, mapG, paths, projection, pathGen;
+
+            function buildMap() {
+                const el = document.getElementById("map-svg");
+                mapSvg = d3.select(el);
+
+                const states = topojson.feature(topoData, topoData.objects.states);
+                projection = d3
+                    .geoAlbersUsa()
+                    .fitSize([el.clientWidth || 700, el.clientHeight || 400], states);
+                pathGen = d3.geoPath().projection(projection);
+
+                mapG = mapSvg.append("g");
+
+                paths = mapG
+                    .selectAll(".state-path")
+                    .data(states.features)
+                    .join("path")
+                    .attr("class", "state-path")
+                    .attr("d", pathGen)
+                    .on("mouseover", onStateHover)
+                    .on("mousemove", onStateMove)
+                    .on("mouseout", onStateOut)
+                    .on("click", onStateClick);
+
+                new ResizeObserver(() => {
+                    const w = el.clientWidth,
+                        h = el.clientHeight;
+                    if (!w || !h) return;
+                    projection.fitSize([w, h], states);
+                    pathGen = d3.geoPath().projection(projection);
+                    paths.attr("d", pathGen);
+                }).observe(el);
+            }
+
+            function getVal(abbr, year, metric) {
+                return eduData[abbr]?.[year]?.[METRICS[metric].col] ?? null;
+            }
+
+            function updateMap() {
+                const col = METRICS[currentMetric].col;
+                const vals = [];
+                Object.keys(eduData).forEach((abbr) => {
+                    const v = getVal(abbr, currentYear, currentMetric);
+                    if (v !== null) vals.push(v);
+                });
+                const [minV, maxV] = d3.extent(vals);
+                colorScale = d3
+                    .scaleSequential(METRICS[currentMetric].colors)
+                    .domain([minV, maxV]);
+
+                paths
+                    .transition()
+                    .duration(400)
+                    .attr("fill", (d) => {
+                        const abbr = FIPS_TO_ABBR[String(d.id).padStart(2, "0")];
+                        if (!abbr) return "#333";
+                        const v = getVal(abbr, currentYear, currentMetric);
+                        return v !== null ? colorScale(v) : "#2a2a2a";
+                    })
+                    .attr("opacity", (d) => {
+                        const abbr = FIPS_TO_ABBR[String(d.id).padStart(2, "0")];
+                        const region = STATE_TO_REGION[abbr];
+                        return region && activeRegions.has(region) ? 1 : 0.12;
+                    });
+
+                paths.classed("highlighted", (d) => {
+                    const abbr = FIPS_TO_ABBR[String(d.id).padStart(2, "0")];
+                    return highlightedFromScatter && highlightedFromScatter === abbr;
+                });
+
+                updateLegend(minV, maxV);
+            }
+
+            function updateLegend(minV, maxV) {
+                const svg = d3.select("#legend-svg");
+                const W = document.getElementById("legend-svg").clientWidth || 220;
+                const H = 50;
+                svg.attr("width", W).attr("height", H);
+                svg.selectAll("*").remove();
+
+                const defs = svg.append("defs");
+                const grad = defs.append("linearGradient").attr("id", "leg-grad");
+                const n = 10;
+                d3.range(n + 1).forEach((i) => {
+                    grad
+                        .append("stop")
+                        .attr("offset", (i / n) * 100 + "%")
+                        .attr("stop-color", colorScale(minV + (maxV - minV) * (i / n)));
+                });
+
+                svg
+                    .append("rect")
+                    .attr("x", 0)
+                    .attr("y", 18)
+                    .attr("width", W)
+                    .attr("height", 14)
+                    .attr("rx", 3)
+                    .attr("fill", "url(#leg-grad)");
+
+                const fmt = METRICS[currentMetric].format;
+                svg
+                    .append("text")
+                    .attr("x", 0)
+                    .attr("y", 12)
+                    .attr("fill", "#8b949e")
+                    .attr("font-size", 10)
+                    .attr("font-family", "Space Mono,monospace")
+                    .text(fmt(minV));
+                svg
+                    .append("text")
+                    .attr("x", W)
+                    .attr("y", 12)
+                    .attr("fill", "#8b949e")
+                    .attr("font-size", 10)
+                    .attr("font-family", "Space Mono,monospace")
+                    .attr("text-anchor", "end")
+                    .text(fmt(maxV));
+            }
+
+            const tooltip = document.getElementById("tooltip");
+
+            function onStateHover(event, d) {
+                const abbr = FIPS_TO_ABBR[String(d.id).padStart(2, "0")];
+                if (!abbr) return;
+                const v = getVal(abbr, currentYear, currentMetric);
+                document.getElementById("tt-name").textContent =
+                    ABBR_TO_FULL[abbr] || abbr;
+                document.getElementById("tt-label").textContent =
+                    METRICS[currentMetric].label;
+                document.getElementById("tt-value").textContent =
+                    v !== null ? METRICS[currentMetric].format(v) : "N/A";
+                tooltip.style.opacity = 1;
+            }
+
+            function onStateMove(event) {
+                tooltip.style.left = event.clientX + 12 + "px";
+                tooltip.style.top = event.clientY - 30 + "px";
+            }
+
+            function onStateOut() {
+                tooltip.style.opacity = 0;
+            }
+
+            function onStateClick(event, d) {
+                const abbr = FIPS_TO_ABBR[String(d.id).padStart(2, "0")];
+                if (!abbr) return;
+                if (event.ctrlKey || event.metaKey) {
+                    if (selectedStates.includes(abbr)) {
+                        selectedStates = selectedStates.filter((s) => s !== abbr);
+                    } else if (selectedStates.length < 8) {
+                        selectedStates.push(abbr);
+                    }
+                } else {
+                    selectedStates = [abbr];
+                }
+                updateLineChart();
+                updateSelectedLegend();
+            }
+
+            function updateLineChart() {
+                const container = document.getElementById("line-chart-container");
+                const noMsg = document.getElementById("no-sel-msg");
+                const svg = d3.select("#line-svg");
+
+                if (selectedStates.length === 0) {
+                    noMsg.style.display = "flex";
+                    document.getElementById("line-svg").style.display = "none";
+                    return;
+                }
+
+                noMsg.style.display = "none";
+                document.getElementById("line-svg").style.display = "block";
+                svg.selectAll("*").remove();
+
+                const W = container.clientWidth - 48;
+                const H = container.clientHeight - 24;
+                const margin = {top: 10, right: 20, bottom: 30, left: 52};
+                const iW = W - margin.left - margin.right;
+                const iH = H - margin.top - margin.bottom;
+
+                const years = d3.range(2000, 2020);
+                const allVals = [];
+                selectedStates.forEach((abbr) => {
+                    years.forEach((y) => {
+                        const v = getVal(abbr, y, currentMetric);
+                        if (v !== null) allVals.push(v);
+                    });
+                });
+
+                const xScale = d3.scaleLinear().domain([2000, 2019]).range([0, iW]);
+                const yScale = d3
+                    .scaleLinear()
+                    .domain([d3.min(allVals) * 0.95, d3.max(allVals) * 1.02])
+                    .range([iH, 0]);
+
+                const g = svg
+                    .append("g")
+                    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+                g.append("g")
+                    .attr("class", "grid")
+                    .call(d3.axisLeft(yScale).tickSize(-iW).tickFormat(""))
+                    .select(".domain")
+                    .remove();
+
+                g.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", `translate(0,${iH})`)
+                    .call(d3.axisBottom(xScale).tickFormat(d3.format("d")).ticks(6));
+                g.append("g")
+                    .attr("class", "axis")
+                    .call(
+                        d3
+                            .axisLeft(yScale)
+                            .ticks(5)
+                            .tickFormat((v) => {
+                                if (currentMetric === "spending")
+                                    return "$" + d3.format("~s")(v);
+                                if (currentMetric === "enrollment") return d3.format("~s")(v);
+                                return d3.format(".0f")(v);
+                            }),
+                    );
+
+                const yearLine = g
+                    .append("line")
+                    .attr("x1", xScale(currentYear))
+                    .attr("x2", xScale(currentYear))
+                    .attr("y1", 0)
+                    .attr("y2", iH)
+                    .attr("stroke", "#e3b341")
+                    .attr("stroke-width", 1)
+                    .attr("stroke-dasharray", "4,3")
+                    .attr("opacity", 0.7);
+
+                const line = d3
+                    .line()
+                    .defined((d) => d !== null)
+                    .x((d, i) => xScale(years[i]))
+                    .y((d) => yScale(d))
+                    .curve(d3.curveMonotoneX);
+
+                selectedStates.forEach((abbr, i) => {
+                    const vals = years.map((y) => getVal(abbr, y, currentMetric));
+                    const color = PALETTE[i % PALETTE.length];
+
+                    g.append("path")
+                        .datum(vals)
+                        .attr("fill", "none")
+                        .attr("stroke", color)
+                        .attr("stroke-width", 2)
+                        .attr("d", line);
+
+                    g.selectAll(`.dot-${i}`)
+                        .data(vals.map((v, j) => ({v, j})).filter((d) => d.v !== null))
+                        .join("circle")
+                        .attr("cx", (d) => xScale(years[d.j]))
+                        .attr("cy", (d) => yScale(d.v))
+                        .attr("r", 3)
+                        .attr("fill", color);
+                });
+            }
+
+            function updateSelectedLegend() {
+                const container = document.getElementById("legend-items");
+                container.innerHTML = "";
+                selectedStates.forEach((abbr, i) => {
+                    const color = PALETTE[i % PALETTE.length];
+                    const item = document.createElement("div");
+                    item.className = "legend-item";
+                    item.innerHTML = `<div class="legend-dot" style="background:${color}"></div>${abbr}`;
+                    item.addEventListener("click", () => {
+                        selectedStates = selectedStates.filter((s) => s !== abbr);
+                        updateLineChart();
+                        updateSelectedLegend();
+                    });
+                    container.appendChild(item);
+                });
+            }
+
+            let scatterDots;
+
+            function buildScatter() {
+                updateScatter();
+            }
+
+            function updateScatter() {
+
+                document
+                    .getElementById("scatter-title")
+                    .textContent = `Scatter: ${METRICS[scatterXMetric].label} vs. ${METRICS[scatterYMetric].label}`;
+
+                const container = document.getElementById("scatter-container");
+                const svg = d3.select("#scatter-svg");
+
+                svg.selectAll("*").remove();
+
+                const W = container.clientWidth || 500;
+                const H = container.clientHeight || 180;
+
+                const margin = {
+                    top: 10,
+                    right: 20,
+                    bottom: 40,
+                    left: 60,
+                };
+
+                const iW = W - margin.left - margin.right;
+                const iH = H - margin.top - margin.bottom;
+
+                const states = Object.keys(FIPS_TO_ABBR).map(
+                    (fips) => FIPS_TO_ABBR[fips],
+                );
+
+                const data = states
+                    .map((abbr) => {
+                        const region = STATE_TO_REGION[abbr];
+
+                        if (!activeRegions.has(region)) return null;
+
+                        const xVal = getVal(abbr, currentYear, scatterXMetric);
+
+                        const yVal = getVal(abbr, currentYear, scatterYMetric);
+
+                        if (xVal == null || yVal == null) return null;
+
+                        return {
+                            abbr,
+                            xVal,
+                            yVal,
+                        };
+                    })
+                    .filter(Boolean);
+
+                if (data.length === 0) return;
+
+                const xScale = d3
+                    .scaleLinear()
+                    .domain(d3.extent(data, (d) => d.xVal))
+                    .nice()
+                    .range([0, iW]);
+
+                const yScale = d3
+                    .scaleLinear()
+                    .domain(d3.extent(data, (d) => d.yVal))
+                    .nice()
+                    .range([iH, 0]);
+
+                const g = svg
+                    .append("g")
+                    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+                // Grid
+
+                g.append("g")
+                    .attr("class", "grid")
+                    .attr("transform", `translate(0,${iH})`)
+                    .call(d3.axisBottom(xScale).tickSize(-iH).tickFormat(""));
+
+                g.append("g")
+                    .attr("class", "grid")
+                    .call(d3.axisLeft(yScale).tickSize(-iW).tickFormat(""));
+
+                // X axis
+
+                g.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", `translate(0,${iH})`)
+                    .call(d3.axisBottom(xScale));
+
+                // Y axis
+
+                g.append("g").attr("class", "axis").call(d3.axisLeft(yScale));
+
+                // X label
+
+                g.append("text")
+                    .attr("x", iW / 2)
+                    .attr("y", iH + 35)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#8b949e")
+                    .attr("font-size", 10)
+                    .attr("font-family", "Space Mono, monospace")
+                    .text(METRICS[scatterXMetric].label);
+
+                // Y label
+
+                g.append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("x", -iH / 2)
+                    .attr("y", -40)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#8b949e")
+                    .attr("font-size", 10)
+                    .attr("font-family", "Space Mono, monospace")
+                    .text(METRICS[scatterYMetric].label);
+
+                // Scatter dots
+
+                scatterDots = g
+                    .selectAll(".scatter-dot")
+                    .data(data)
+                    .join("circle")
+                    .attr("class", "scatter-dot")
+                    .attr("cx", (d) => xScale(d.xVal))
+                    .attr("cy", (d) => yScale(d.yVal))
+                    .attr("r", 5)
+                    .attr("fill", (d) => {
+                        const idx = selectedStates.indexOf(d.abbr);
+
+                        return idx >= 0 ? PALETTE[idx % PALETTE.length] : "#58a6ff";
+                    })
+                    .attr("opacity", 0.75)
+
+                    .on("mouseover", (event, d) => {
+                        document.getElementById("tt-name").textContent =
+                            ABBR_TO_FULL[d.abbr] || d.abbr;
+
+                        document.getElementById("tt-label").textContent =
+                            `${METRICS[scatterXMetric].label}: ${METRICS[
+                                scatterXMetric
+                            ].format(d.xVal)}`;
+
+                        document.getElementById("tt-value").textContent =
+                            `${METRICS[scatterYMetric].label}: ${METRICS[
+                                scatterYMetric
+                            ].format(d.yVal)}`;
+
+                        tooltip.style.opacity = 1;
+                    })
+
+                    .on("mousemove", onStateMove)
+
+                    .on("mouseout", () => {
+                        tooltip.style.opacity = 0;
+                        highlightedFromScatter = null;
+                        updateMap();
+                    })
+
+                    .on("click", (event, d) => {
+                        highlightedFromScatter = d.abbr;
+                        updateMap();
+                    });
+            }
+            document
+                .getElementById("metric-select")
+                .addEventListener("change", (e) => {
+                    currentMetric = e.target.value;
+
+                    scatterYMetric = currentMetric;
+
+                    document.getElementById("scatter-y").value = currentMetric;
+
+                    updateViz();
+                });
+            document
+                .getElementById("scatter-x")
+                .addEventListener("change", (e) => {
+                    scatterXMetric = e.target.value;
+
+                    updateScatter();
+                });
+
+            document
+                .getElementById("scatter-y")
+                .addEventListener("change", (e) => {
+                    scatterYMetric = e.target.value;
+
+                    updateScatter();
+                });
+
+            document.getElementById("year-slider").addEventListener("input", (e) => {
+                currentYear = +e.target.value;
+                document.getElementById("year-display").textContent = currentYear;
+                updateMap();
+                updateScatter();
+                updateLineChart();
+            });
+
+            const playBtn = document.getElementById("play-btn");
+            playBtn.addEventListener("click", () => {
+                if (playInterval) {
+                    clearInterval(playInterval);
+                    playInterval = null;
+                    playBtn.textContent = "▶ PLAY ANIMACIJA";
+                    playBtn.classList.remove("paused");
+                } else {
+                    playBtn.textContent = "⏸ PAUZIRAJ";
+                    playBtn.classList.add("paused");
+                    if (currentYear >= 2019) {
+                        currentYear = 2000;
+                    }
+                    playInterval = setInterval(() => {
+                        currentYear++;
+                        document.getElementById("year-display").textContent = currentYear;
+                        document.getElementById("year-slider").value = currentYear;
+                        updateMap();
+                        updateScatter();
+                        updateLineChart();
+                        if (currentYear >= 2019) {
+                            clearInterval(playInterval);
+                            playInterval = null;
+                            playBtn.textContent = "▶ PLAY ANIMACIJA";
+                            playBtn.classList.remove("paused");
+                        }
+                    }, 850);
+                }
+            });
+
+            document
+                .getElementById("scatter-stat-select")
+                ?.addEventListener("change", () => updateScatter());
+
+            function updateViz() {
+                updateMap();
+                updateScatter();
+                updateLineChart();
+            }
+
+            init();
+        </script>
+</body>
+
 </html>
