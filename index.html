@@ -165,18 +165,8 @@
                 STATE_TO_REGION,
             } from "./js/utils/mappings.js"
 
+            import {appState} from "./js/state.js";
 
-            let eduData = {};
-            let topoData = null;
-            let currentMetric = "spending";
-            let currentYear = 2000;
-            let selectedStates = [];
-            let scatterXMetric = "spending";
-            let scatterYMetric = "math";
-            let activeRegions = new Set(Object.keys(REGIONS));
-            let highlightedFromScatter = null;
-            let playInterval = null;
-            let colorScale;
 
             async function init() {
                 try {
@@ -244,8 +234,8 @@
                     label.className = "region-check";
                     label.innerHTML = `<input type="checkbox" checked value="${region}"> ${region}`;
                     label.querySelector("input").addEventListener("change", (e) => {
-                        if (e.target.checked) activeRegions.add(region);
-                        else activeRegions.delete(region);
+                        if (e.target.checked) appState.activeRegions.add(region);
+                        else appState.activeRegions.delete(region);
                         updateMap();
                         updateScatter();
                     });
@@ -259,7 +249,7 @@
                 const el = document.getElementById("map-svg");
                 mapSvg = d3.select(el);
 
-                const states = topojson.feature(topoData, topoData.objects.states);
+                const states = topojson.feature(appState.topoData, appState.topoData.objects.states);
                 projection = d3
                     .geoAlbersUsa()
                     .fitSize([el.clientWidth || 700, el.clientHeight || 400], states);
@@ -293,15 +283,15 @@
             }
 
             function updateMap() {
-                const col = METRICS[currentMetric].col;
+                const col = METRICS[appState.currentMetric].col;
                 const vals = [];
-                Object.keys(eduData).forEach((abbr) => {
-                    const v = getVal(abbr, currentYear, currentMetric);
+                Object.keys(appState.eduData).forEach((abbr) => {
+                    const v = getVal(abbr, appState.currentYear, appState.currentMetric);
                     if (v !== null) vals.push(v);
                 });
                 const [minV, maxV] = d3.extent(vals);
-                colorScale = d3
-                    .scaleSequential(METRICS[currentMetric].colors)
+                appState.colorScale = d3
+                    .scaleSequential(METRICS[appState.currentMetric].colors)
                     .domain([minV, maxV]);
 
                 paths
@@ -310,18 +300,18 @@
                     .attr("fill", (d) => {
                         const abbr = FIPS_TO_ABBR[String(d.id).padStart(2, "0")];
                         if (!abbr) return "#333";
-                        const v = getVal(abbr, currentYear, currentMetric);
-                        return v !== null ? colorScale(v) : "#2a2a2a";
+                        const v = getVal(abbr, appState.currentYear, appState.currentMetric);
+                        return v !== null ? appState.colorScale(v) : "#2a2a2a";
                     })
                     .attr("opacity", (d) => {
                         const abbr = FIPS_TO_ABBR[String(d.id).padStart(2, "0")];
                         const region = STATE_TO_REGION[abbr];
-                        return region && activeRegions.has(region) ? 1 : 0.12;
+                        return region && appState.activeRegions.has(region) ? 1 : 0.12;
                     });
 
                 paths.classed("highlighted", (d) => {
                     const abbr = FIPS_TO_ABBR[String(d.id).padStart(2, "0")];
-                    return highlightedFromScatter && highlightedFromScatter === abbr;
+                    return appState.highlightedFromScatter && appState.highlightedFromScatter === abbr;
                 });
 
                 updateLegend(minV, maxV);
@@ -341,7 +331,7 @@
                     grad
                         .append("stop")
                         .attr("offset", (i / n) * 100 + "%")
-                        .attr("stop-color", colorScale(minV + (maxV - minV) * (i / n)));
+                        .attr("stop-color", appState.colorScale(minV + (maxV - minV) * (i / n)));
                 });
 
                 svg
@@ -353,7 +343,7 @@
                     .attr("rx", 3)
                     .attr("fill", "url(#leg-grad)");
 
-                const fmt = METRICS[currentMetric].format;
+                const fmt = METRICS[appState.currentMetric].format;
                 svg
                     .append("text")
                     .attr("x", 0)
@@ -378,13 +368,13 @@
             function onStateHover(event, d) {
                 const abbr = FIPS_TO_ABBR[String(d.id).padStart(2, "0")];
                 if (!abbr) return;
-                const v = getVal(abbr, currentYear, currentMetric);
+                const v = getVal(abbr, appState.currentYear, appState.currentMetric);
                 document.getElementById("tt-name").textContent =
                     ABBR_TO_FULL[abbr] || abbr;
                 document.getElementById("tt-label").textContent =
-                    METRICS[currentMetric].label;
+                    METRICS[appState.currentMetric].label;
                 document.getElementById("tt-value").textContent =
-                    v !== null ? METRICS[currentMetric].format(v) : "N/A";
+                    v !== null ? METRICS[appState.currentMetric].format(v) : "N/A";
                 tooltip.style.opacity = 1;
             }
 
@@ -401,13 +391,13 @@
                 const abbr = FIPS_TO_ABBR[String(d.id).padStart(2, "0")];
                 if (!abbr) return;
                 if (event.ctrlKey || event.metaKey) {
-                    if (selectedStates.includes(abbr)) {
-                        selectedStates = selectedStates.filter((s) => s !== abbr);
-                    } else if (selectedStates.length < 8) {
-                        selectedStates.push(abbr);
+                    if (appState.selectedStates.includes(abbr)) {
+                        appState.selectedStates = appState.selectedStates.filter((s) => s !== abbr);
+                    } else if (appState.selectedStates.length < 8) {
+                        appState.selectedStates.push(abbr);
                     }
                 } else {
-                    selectedStates = [abbr];
+                    appState.selectedStates = [abbr];
                 }
                 updateLineChart();
                 updateSelectedLegend();
@@ -418,7 +408,7 @@
                 const noMsg = document.getElementById("no-sel-msg");
                 const svg = d3.select("#line-svg");
 
-                if (selectedStates.length === 0) {
+                if (appState.selectedStates.length === 0) {
                     noMsg.style.display = "flex";
                     document.getElementById("line-svg").style.display = "none";
                     return;
@@ -436,9 +426,9 @@
 
                 const years = d3.range(2000, 2020);
                 const allVals = [];
-                selectedStates.forEach((abbr) => {
+                appState.selectedStates.forEach((abbr) => {
                     years.forEach((y) => {
-                        const v = getVal(abbr, y, currentMetric);
+                        const v = getVal(abbr, y, appState.currentMetric);
                         if (v !== null) allVals.push(v);
                     });
                 });
@@ -470,17 +460,17 @@
                             .axisLeft(yScale)
                             .ticks(5)
                             .tickFormat((v) => {
-                                if (currentMetric === "spending")
+                                if (appState.currentMetric === "spending")
                                     return "$" + d3.format("~s")(v);
-                                if (currentMetric === "enrollment") return d3.format("~s")(v);
+                                if (appState.currentMetric === "enrollment") return d3.format("~s")(v);
                                 return d3.format(".0f")(v);
                             }),
                     );
 
                 const yearLine = g
                     .append("line")
-                    .attr("x1", xScale(currentYear))
-                    .attr("x2", xScale(currentYear))
+                    .attr("x1", xScale(appState.currentYear))
+                    .attr("x2", xScale(appState.currentYear))
                     .attr("y1", 0)
                     .attr("y2", iH)
                     .attr("stroke", "#e3b341")
@@ -495,8 +485,8 @@
                     .y((d) => yScale(d))
                     .curve(d3.curveMonotoneX);
 
-                selectedStates.forEach((abbr, i) => {
-                    const vals = years.map((y) => getVal(abbr, y, currentMetric));
+                appState.selectedStates.forEach((abbr, i) => {
+                    const vals = years.map((y) => getVal(abbr, y, appState.currentMetric));
                     const color = PALETTE[i % PALETTE.length];
 
                     g.append("path")
@@ -519,13 +509,13 @@
             function updateSelectedLegend() {
                 const container = document.getElementById("legend-items");
                 container.innerHTML = "";
-                selectedStates.forEach((abbr, i) => {
+                appState.selectedStates.forEach((abbr, i) => {
                     const color = PALETTE[i % PALETTE.length];
                     const item = document.createElement("div");
                     item.className = "legend-item";
                     item.innerHTML = `<div class="legend-dot" style="background:${color}"></div>${abbr}`;
                     item.addEventListener("click", () => {
-                        selectedStates = selectedStates.filter((s) => s !== abbr);
+                        appState.selectedStates = appState.selectedStates.filter((s) => s !== abbr);
                         updateLineChart();
                         updateSelectedLegend();
                     });
@@ -543,7 +533,7 @@
 
                 document
                     .getElementById("scatter-title")
-                    .textContent = `Scatter: ${METRICS[scatterXMetric].label} vs. ${METRICS[scatterYMetric].label}`;
+                    .textContent = `Scatter: ${METRICS[appState.scatterXMetric].label} vs. ${METRICS[appState.scatterYMetric].label}`;
 
                 const container = document.getElementById("scatter-container");
                 const svg = d3.select("#scatter-svg");
@@ -571,11 +561,11 @@
                     .map((abbr) => {
                         const region = STATE_TO_REGION[abbr];
 
-                        if (!activeRegions.has(region)) return null;
+                        if (!appState.activeRegions.has(region)) return null;
 
-                        const xVal = getVal(abbr, currentYear, scatterXMetric);
+                        const xVal = getVal(abbr, appState.currentYear, appState.scatterXMetric);
 
-                        const yVal = getVal(abbr, currentYear, scatterYMetric);
+                        const yVal = getVal(abbr, appState.currentYear, appState.scatterYMetric);
 
                         if (xVal == null || yVal == null) return null;
 
@@ -636,7 +626,7 @@
                     .attr("fill", "#8b949e")
                     .attr("font-size", 10)
                     .attr("font-family", "Space Mono, monospace")
-                    .text(METRICS[scatterXMetric].label);
+                    .text(METRICS[appState.scatterXMetric].label);
 
                 // Y label
 
@@ -648,7 +638,7 @@
                     .attr("fill", "#8b949e")
                     .attr("font-size", 10)
                     .attr("font-family", "Space Mono, monospace")
-                    .text(METRICS[scatterYMetric].label);
+                    .text(METRICS[appState.scatterYMetric].label);
 
                 const statMode =
                     document.getElementById("scatter-stat-select")?.value || "none";
@@ -706,7 +696,7 @@
                     .attr("cy", (d) => yScale(d.yVal))
                     .attr("r", 5)
                     .attr("fill", (d) => {
-                        const idx = selectedStates.indexOf(d.abbr);
+                        const idx = appState.selectedStates.indexOf(d.abbr);
 
                         return idx >= 0 ? PALETTE[idx % PALETTE.length] : "#58a6ff";
                     })
@@ -717,13 +707,13 @@
                             ABBR_TO_FULL[d.abbr] || d.abbr;
 
                         document.getElementById("tt-label").textContent =
-                            `${METRICS[scatterXMetric].label}: ${METRICS[
-                                scatterXMetric
+                            `${METRICS[appState.scatterXMetric].label}: ${METRICS[
+                                appState.scatterXMetric
                             ].format(d.xVal)}`;
 
                         document.getElementById("tt-value").textContent =
-                            `${METRICS[scatterYMetric].label}: ${METRICS[
-                                scatterYMetric
+                            `${METRICS[appState.scatterYMetric].label}: ${METRICS[
+                                appState.scatterYMetric
                             ].format(d.yVal)}`;
 
                         tooltip.style.opacity = 1;
@@ -733,30 +723,30 @@
 
                     .on("mouseout", () => {
                         tooltip.style.opacity = 0;
-                        highlightedFromScatter = null;
+                        appState.highlightedFromScatter = null;
                         updateMap();
                     })
 
                     .on("click", (event, d) => {
-                        highlightedFromScatter = d.abbr;
+                        appState.highlightedFromScatter = d.abbr;
                         updateMap();
                     });
             }
             document
                 .getElementById("metric-select")
                 .addEventListener("change", (e) => {
-                    currentMetric = e.target.value;
+                    appState.currentMetric = e.target.value;
 
-                    scatterYMetric = currentMetric;
+                    appState.scatterYMetric = appState.currentMetric;
 
-                    document.getElementById("scatter-y").value = currentMetric;
+                    document.getElementById("scatter-y").value = appState.currentMetric;
 
                     updateViz();
                 });
             document
                 .getElementById("scatter-x")
                 .addEventListener("change", (e) => {
-                    scatterXMetric = e.target.value;
+                    appState.scatterXMetric = e.target.value;
 
                     updateScatter();
                 });
@@ -764,14 +754,14 @@
             document
                 .getElementById("scatter-y")
                 .addEventListener("change", (e) => {
-                    scatterYMetric = e.target.value;
+                    appState.scatterYMetric = e.target.value;
 
                     updateScatter();
                 });
 
             document.getElementById("year-slider").addEventListener("input", (e) => {
-                currentYear = +e.target.value;
-                document.getElementById("year-display").textContent = currentYear;
+                appState.currentYear = +e.target.value;
+                document.getElementById("year-display").textContent = appState.currentYear;
                 updateMap();
                 updateScatter();
                 updateLineChart();
@@ -779,27 +769,27 @@
 
             const playBtn = document.getElementById("play-btn");
             playBtn.addEventListener("click", () => {
-                if (playInterval) {
-                    clearInterval(playInterval);
-                    playInterval = null;
+                if (appState.playInterval) {
+                    clearInterval(appState.playInterval);
+                    appState.playInterval = null;
                     playBtn.textContent = "▶ PLAY ANIMACIJA";
                     playBtn.classList.remove("paused");
                 } else {
                     playBtn.textContent = "⏸ PAUZIRAJ";
                     playBtn.classList.add("paused");
-                    if (currentYear >= 2019) {
-                        currentYear = 2000;
+                    if (appState.currentYear >= 2019) {
+                        appState.currentYear = 2000;
                     }
-                    playInterval = setInterval(() => {
-                        currentYear++;
-                        document.getElementById("year-display").textContent = currentYear;
-                        document.getElementById("year-slider").value = currentYear;
+                    appState.playInterval = setInterval(() => {
+                        appState.currentYear++;
+                        document.getElementById("year-display").textContent = appState.currentYear;
+                        document.getElementById("year-slider").value = appState.currentYear;
                         updateMap();
                         updateScatter();
                         updateLineChart();
-                        if (currentYear >= 2019) {
-                            clearInterval(playInterval);
-                            playInterval = null;
+                        if (appState.currentYear >= 2019) {
+                            clearInterval(appState.playInterval);
+                            appState.playInterval = null;
                             playBtn.textContent = "▶ PLAY ANIMACIJA";
                             playBtn.classList.remove("paused");
                         }
