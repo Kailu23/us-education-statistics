@@ -190,6 +190,10 @@
                 buildRegionFilters
             } from './js/components/regionFilters.js';
 
+            import {
+                updateViz
+            } from './js/utils/updateViz.js';
+
             async function init() {
                 try {
                     await loadData();
@@ -290,12 +294,6 @@
             document
                 .getElementById("scatter-stat-select")
                 ?.addEventListener("change", () => updateScatter());
-
-            function updateViz() {
-                updateMap();
-                updateScatter();
-                updateLineChart();
-            }
 
             init();
         </script>
