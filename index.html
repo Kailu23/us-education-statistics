@@ -199,6 +199,10 @@
                 showError
             } from './js/ui/loading.js';
 
+            import {
+                bindEventHandlers
+            } from './js/ui/eventHandlers.js';
+
             async function init() {
                 try {
                     await loadData();
@@ -217,43 +221,10 @@
                 buildRegionFilters();
                 buildMap();
                 updateScatter();
+                bindEventHandlers();
                 updateViz();
             }
 
-            document
-                .getElementById("metric-select")
-                .addEventListener("change", (e) => {
-                    appState.currentMetric = e.target.value;
-
-                    appState.scatterYMetric = appState.currentMetric;
-
-                    document.getElementById("scatter-y").value = appState.currentMetric;
-
-                    updateViz();
-                });
-            document
-                .getElementById("scatter-x")
-                .addEventListener("change", (e) => {
-                    appState.scatterXMetric = e.target.value;
-
-                    updateScatter();
-                });
-
-            document
-                .getElementById("scatter-y")
-                .addEventListener("change", (e) => {
-                    appState.scatterYMetric = e.target.value;
-
-                    updateScatter();
-                });
-
-            document.getElementById("year-slider").addEventListener("input", (e) => {
-                appState.currentYear = +e.target.value;
-                document.getElementById("year-display").textContent = appState.currentYear;
-                updateMap();
-                updateScatter();
-                updateLineChart();
-            });
 
             const playBtn = document.getElementById("play-btn");
             playBtn.addEventListener("click", () => {
@@ -284,11 +255,6 @@
                     }, 850);
                 }
             });
-
-            document
-                .getElementById("scatter-stat-select")
-                ?.addEventListener("change", () => updateScatter());
-
             init();
         </script>
 </body>
