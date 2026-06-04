@@ -5,8 +5,8 @@ import {
 export const appState = {
     eduData: {},
     topoData: null,
-    currentMetric: "spending",
-    currentYear: 2000,
+    currentMetric: "math",
+    currentYear: null,
     selectedStates: [],
     scatterXMetric: "spending",
     scatterYMetric: "math",

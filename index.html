@@ -59,7 +59,7 @@
             <div class="control-group">
                 <label>Godina</label>
                 <div class="year-display" id="year-display">2001</div>
-                <input type="range" id="year-slider" min="2001" max="2016" value="2001" step="1" />
+                <input type="range" id="year-slider" min="0" max="0" value="0" step="1" />
                 <button class="play-btn" id="play-btn">▶ PLAY ANIMACIJA</button>
             </div>
 
@@ -208,9 +208,25 @@
                 bindAnimationControls
             } from './js/ui/animation.js';
 
+            import {
+                getAvailableYears
+            } from './js/dataLoader.js';
+
             async function init() {
                 try {
                     await loadData();
+
+                    const years = getAvailableYears(appState.currentMetric);
+
+                    appState.currentYear = years[0];
+
+                    const slider = document.getElementById("year-slider");
+
+                    slider.min = 0;
+                    slider.max = years.length - 1;
+                    slider.value = 0
+
+                    document.getElementById("year-display").textContent = appState.currentYear;
 
                     hideLoading()
 
@@ -223,6 +239,7 @@
 
 
             function buildUI() {
+                document.getElementById("metric-select").value = appState.currentMetric;
                 buildRegionFilters();
                 buildMap();
                 bindEventHandlers();
