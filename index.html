@@ -203,6 +203,11 @@
                 bindEventHandlers
             } from './js/ui/eventHandlers.js';
 
+
+            import {
+                bindAnimationControls
+            } from './js/ui/animation.js';
+
             async function init() {
                 try {
                     await loadData();
@@ -222,39 +227,10 @@
                 buildMap();
                 updateScatter();
                 bindEventHandlers();
+                bindAnimationControls();
                 updateViz();
             }
 
-
-            const playBtn = document.getElementById("play-btn");
-            playBtn.addEventListener("click", () => {
-                if (appState.playInterval) {
-                    clearInterval(appState.playInterval);
-                    appState.playInterval = null;
-                    playBtn.textContent = "▶ PLAY ANIMACIJA";
-                    playBtn.classList.remove("paused");
-                } else {
-                    playBtn.textContent = "⏸ PAUZIRAJ";
-                    playBtn.classList.add("paused");
-                    if (appState.currentYear >= 2019) {
-                        appState.currentYear = 2000;
-                    }
-                    appState.playInterval = setInterval(() => {
-                        appState.currentYear++;
-                        document.getElementById("year-display").textContent = appState.currentYear;
-                        document.getElementById("year-slider").value = appState.currentYear;
-                        updateMap();
-                        updateScatter();
-                        updateLineChart();
-                        if (appState.currentYear >= 2019) {
-                            clearInterval(appState.playInterval);
-                            appState.playInterval = null;
-                            playBtn.textContent = "▶ PLAY ANIMACIJA";
-                            playBtn.classList.remove("paused");
-                        }
-                    }, 850);
-                }
-            });
             init();
         </script>
 </body>
