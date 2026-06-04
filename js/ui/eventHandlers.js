@@ -68,4 +68,18 @@ export function bindEventHandlers() {
         ?.addEventListener("change", () => {
             updateScatter()
         });
+    document
+        .getElementById("reset-year")
+        ?.addEventListener("click", () => {
+            const years = getAvailableYears(appState.currentMetric);
+
+            appState.currentYear = years[0];
+
+            document.getElementById("year-slider").value = 0;
+            document.getElementById("year-display").textContent = appState.currentYear;
+
+            updateMap();
+            updateScatter();
+            updateLineChart();
+        })
 }
