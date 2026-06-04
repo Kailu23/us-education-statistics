@@ -1,5 +1,5 @@
 import { appState } from '../state.js';
-
+import { getClosestYear } from '../utils/yearUtils.js';
 import { getAvailableYears } from '../dataLoader.js';
 import { updateMap } from '../components/map.js';
 import { updateScatter } from '../components/scatter.js';
@@ -23,11 +23,11 @@ export function bindEventHandlers() {
             slider.max = years.length - 1;
 
             if (!years.includes(appState.currentYear)) {
-                slider.value = 0;
-                appState.currentYear = years[0];
-            } else {
-                slider.value = years.indexOf(appState.currentYear);
+                const closestYear = getClosestYear(appState.currentYear, years);
+
+                appState.currentYear = closestYear;
             }
+            slider.value = years.indexOf(appState.currentYear);
 
             document.getElementById("year-display").textContent = appState.currentYear;
 
