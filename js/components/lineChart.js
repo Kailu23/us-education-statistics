@@ -26,10 +26,12 @@ export function updateLineChart() {
     const iW = W - margin.left - margin.right;
     const iH = H - margin.top - margin.bottom;
 
-    const years = appState.currentMetric === "math" ||
-        appState.currentMetric === "reading" ? d3.range(2000, 2020).filter(
-            (y) => getValue("CA", y, appState.currentMetric) !== null
-        ) : d3.range(2000, 2020);
+    const years = d3.range(2000, 2020).filter((year) => {
+        return appState.selectedStates.some((abbr) => {
+            return getValue(abbr, year, appState.currentMetric) !== null;
+        });
+    });
+
     const allVals = [];
     appState.selectedStates.forEach((abbr) => {
         years.forEach((y) => {
@@ -37,9 +39,14 @@ export function updateLineChart() {
             if (v !== null) allVals.push(v);
         });
     });
-
-    const xScale = d3.scalePoint()
-        .domain(years)
+    if (allVals.length === 0) {
+        return;
+    }
+    const xScale = d3.scaleLinear()
+        .domain([
+            d3.min(years),
+            d3.max(years)
+        ])
         .range([0, iW]);
 
     const yScale = d3
