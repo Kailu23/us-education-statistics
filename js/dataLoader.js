@@ -4,8 +4,15 @@ import { METRICS, TOPO_URL, CSV_PATH } from "./utils/constants.js";
 
 export function normalizeEducationData(rows) {
     rows.forEach((row) => {
-        const abbr = CSV_TO_ABBR[row.STATE?.trim()?.toUpperCase()];
-        if (!abbr) return;
+        const stateName = row.STATE
+            ?.trim()
+            ?.replaceAll("_", " ")
+            ?.toUpperCase();
+
+        const abbr = CSV_TO_ABBR[stateName];
+        if (!abbr) {
+            return;
+        }
         const year = +row.YEAR;
         if (year < 2000 || year > 2019) return;
 
