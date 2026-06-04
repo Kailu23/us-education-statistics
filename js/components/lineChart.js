@@ -26,7 +26,10 @@ export function updateLineChart() {
     const iW = W - margin.left - margin.right;
     const iH = H - margin.top - margin.bottom;
 
-    const years = d3.range(2000, 2020);
+    const years = appState.currentMetric === "math" ||
+        appState.currentMetric === "reading" ? d3.range(2000, 2020).filter(
+            (y) => getValue("CA", y, appState.currentMetric) !== null
+        ) : d3.range(2000, 2020);
     const allVals = [];
     appState.selectedStates.forEach((abbr) => {
         years.forEach((y) => {
@@ -35,7 +38,10 @@ export function updateLineChart() {
         });
     });
 
-    const xScale = d3.scaleLinear().domain([2000, 2019]).range([0, iW]);
+    const xScale = d3.scalePoint()
+        .domain(years)
+        .range([0, iW]);
+
     const yScale = d3
         .scaleLinear()
         .domain([d3.min(allVals) * 0.95, d3.max(allVals) * 1.02])
@@ -54,7 +60,7 @@ export function updateLineChart() {
     g.append("g")
         .attr("class", "axis")
         .attr("transform", `translate(0,${iH})`)
-        .call(d3.axisBottom(xScale).tickFormat(d3.format("d")).ticks(6));
+        .call(d3.axisBottom(xScale));
     g.append("g")
         .attr("class", "axis")
         .call(
@@ -69,40 +75,46 @@ export function updateLineChart() {
                 }),
         );
 
-    const yearLine = g
-        .append("line")
-        .attr("x1", xScale(appState.currentYear))
-        .attr("x2", xScale(appState.currentYear))
-        .attr("y1", 0)
-        .attr("y2", iH)
-        .attr("stroke", "#e3b341")
-        .attr("stroke-width", 1)
-        .attr("stroke-dasharray", "4,3")
-        .attr("opacity", 0.7);
+    if (years.includes(appState.currentYear)) {
+        g.append("line")
+            .attr("x1", xScale(appState.currentYear))
+            .attr("x2", xScale(appState.currentYear))
+            .attr("y1", 0)
+            .attr("y2", iH)
+            .attr("stroke", "#e3b341")
+            .attr("stroke-width", 1)
+            .attr("stroke-dasharray", "4,3")
+            .attr("opacity", 0.7);
+    }
 
     const line = d3
         .line()
-        .defined((d) => d !== null)
-        .x((d, i) => xScale(years[i]))
-        .y((d) => yScale(d))
+        .x((d) => xScale(d.year))
+        .y((d) => yScale(d.value))
         .curve(d3.curveMonotoneX);
 
     appState.selectedStates.forEach((abbr, i) => {
-        const vals = years.map((y) => getValue(abbr, y, appState.currentMetric));
+        const data = years
+            .map((year) => ({
+                year,
+                value: getValue(abbr, year, appState.currentMetric),
+            }))
+            .filter((d) => d.value !== null);
+
         const color = PALETTE[i % PALETTE.length];
 
         g.append("path")
-            .datum(vals)
+            .datum(data)
             .attr("fill", "none")
             .attr("stroke", color)
             .attr("stroke-width", 2)
             .attr("d", line);
 
         g.selectAll(`.dot-${i}`)
-            .data(vals.map((v, j) => ({ v, j })).filter((d) => d.v !== null))
+            .data(data)
             .join("circle")
-            .attr("cx", (d) => xScale(years[d.j]))
-            .attr("cy", (d) => yScale(d.v))
+            .attr("cx", (d) => xScale(d.year))
+            .attr("cy", (d) => yScale(d.value))
             .attr("r", 3)
             .attr("fill", color);
     });

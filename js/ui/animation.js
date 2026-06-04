@@ -27,8 +27,8 @@ function stopAnimation(playBtn) {
 function startAnimation(playBtn) {
     playBtn.textContent = "⏸ PAUZIRAJ";
     playBtn.classList.add("paused");
-    if (appState.currentYear >= 2019) {
-        appState.currentYear = 2000;
+    if (appState.currentYear >= 2016) {
+        appState.currentYear = 2001;
     }
     appState.playInterval = setInterval(() => {
         appState.currentYear++;
@@ -37,7 +37,7 @@ function startAnimation(playBtn) {
         updateMap();
         updateScatter();
         updateLineChart();
-        if (appState.currentYear >= 2019) {
+        if (appState.currentYear >= 2016) {
             clearInterval(appState.playInterval);
             appState.playInterval = null;
             playBtn.textContent = "▶ PLAY ANIMACIJA";

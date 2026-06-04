@@ -14,8 +14,7 @@ export function normalizeEducationData(rows) {
             return;
         }
         const year = +row.YEAR;
-        if (year < 2000 || year > 2019) return;
-
+        if (year < 2001 || year > 2016) return;
         const enrollment = +row.ENROLL || null;
         const spending = +row.TOTAL_EXPENDITURE || null;
         const math = +row.AVG_MATH_4_SCORE || null;
