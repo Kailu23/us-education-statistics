@@ -1,5 +1,6 @@
 import { appState } from '../state.js';
 
+import { getAvailableYears } from '../dataLoader.js';
 import { updateMap } from '../components/map.js';
 import { updateScatter } from '../components/scatter.js';
 import { updateLineChart } from '../components/lineChart.js';
@@ -13,6 +14,22 @@ export function bindEventHandlers() {
             appState.scatterYMetric = appState.currentMetric;
 
             document.getElementById("scatter-y").value = appState.currentMetric;
+
+            const years = getAvailableYears(appState.currentMetric);
+
+            const slider = document.getElementById("year-slider");
+
+            slider.min = 0;
+            slider.max = years.length - 1;
+
+            if (!years.includes(appState.currentYear)) {
+                slider.value = 0;
+                appState.currentYear = years[0];
+            } else {
+                slider.value = years.indexOf(appState.currentYear);
+            }
+
+            document.getElementById("year-display").textContent = appState.currentYear;
 
             updateMap();
             updateScatter();
@@ -37,7 +54,9 @@ export function bindEventHandlers() {
     document
         .getElementById("year-slider")
         .addEventListener("input", (e) => {
-            appState.currentYear = +e.target.value;
+            const years = getAvailableYears(appState.currentMetric);
+
+            appState.currentYear = years[+e.target.value];;
             document.getElementById("year-display").textContent = appState.currentYear;
             updateMap();
             updateScatter();

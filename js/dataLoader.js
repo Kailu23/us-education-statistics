@@ -66,3 +66,19 @@ export async function loadData() {
     appState.topoData = topo;
     normalizeEducationData(csv);
 }
+
+export function getAvailableYears(metric) {
+    const years = new Set();
+
+    Object.values(appState.eduData).forEach((stateData) => {
+        Object.entries(stateData).forEach(([year, record]) => {
+            const value = record?.[METRICS[metric].col];
+
+            if (value !== null && value !== undefined) {
+                years.add(+year);
+            }
+        });
+    });
+
+    return [...years].sort((a, b) => a - b);
+}
