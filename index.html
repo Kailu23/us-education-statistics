@@ -186,6 +186,10 @@
                 updateScatter
             } from "./js/components/scatter.js";
 
+            import {
+                buildRegionFilters
+            } from './js/components/regionFilters.js';
+
             async function init() {
                 try {
                     await loadData();
@@ -217,26 +221,6 @@
                 updateScatter();
                 updateViz();
             }
-
-            function buildRegionFilters() {
-                const container = document.getElementById("region-filters");
-                Object.keys(REGIONS).forEach((region) => {
-                    const label = document.createElement("label");
-                    label.className = "region-check";
-                    label.innerHTML = `<input type="checkbox" checked value="${region}"> ${region}`;
-                    label.querySelector("input").addEventListener("change", (e) => {
-                        if (e.target.checked) appState.activeRegions.add(region);
-                        else appState.activeRegions.delete(region);
-                        updateMap();
-                        updateScatter();
-                    });
-                    container.appendChild(label);
-                });
-            }
-
-
-
-
 
             document
                 .getElementById("metric-select")
