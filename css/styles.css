@@ -10,6 +10,7 @@
     --accent3: #f78166;
     --accent4: #d2a8ff;
     --gold: #e3b341;
+    --page-padding: 100px;
 }
 
 * {
@@ -24,6 +25,7 @@ body {
     font-family: "DM Sans", sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
+    padding: var(--page-padding);
 }
 
 header {
@@ -60,7 +62,7 @@ h1 {
     display: grid;
     grid-template-columns: 260px 1fr 300px;
     grid-template-rows: 1fr 1fr;
-    height: calc(100vh - 65px);
+    height: calc(100vh - 65px - (var(--page-padding) * 2));
 }
 
 .left-panel {
